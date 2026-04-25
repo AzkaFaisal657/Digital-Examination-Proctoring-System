@@ -58,14 +58,15 @@ Use these Oracle details:
 - Username: system
 - Host: localhost
 - Port: 1521
-- Service: XEPDB1
+- Service: XE
 
 Set backend environment variables in backend/.env:
 
 ```
 DB_USER=system
 DB_PASSWORD=your_oracle_password
-DB_CONNECTION=localhost:1521/XEPDB1
+DB_CONNECTION=localhost:1521/XE
+DB_SCHEMA=PROJECT
 PORT=5000
 ```
 
@@ -143,6 +144,47 @@ Examples:
 - Oracle syntax is used (VARCHAR2, NUMBER, SYSDATE, SYSTIMESTAMP, TO_DATE).
 - IDs are modeled as VARCHAR2 for simplicity.
 - Some weak entity routes use composite keys in request body for update/delete operations.
+
+## Phase 2 Alignment
+
+This project is kept intentionally simple so it matches the Phase 2 brief:
+
+- Oracle XE is used, which is allowed.
+- The schema follows the Phase 1 EERD tables and relationships.
+- CRUD is available for the core tables through the web front end.
+- SQL uses only common beginner-level commands like SELECT, INSERT, UPDATE, DELETE, and basic constraints.
+- The frontend is only for demo purposes and does not depend on any framework.
+
+## Basic SQL Used
+
+These are the main SQL commands you should know for viva/demo:
+
+- `INSERT INTO table_name (...) VALUES (...);`
+- `SELECT * FROM table_name;`
+- `SELECT * FROM table_name WHERE column = value;`
+- `UPDATE table_name SET column = value WHERE condition;`
+- `DELETE FROM table_name WHERE condition;`
+
+Note:
+
+- SQL commands are `INSERT`, `SELECT`, `UPDATE`, and `DELETE`.
+- `GET`, `POST`, `PUT`, and `DELETE` are HTTP methods used by the frontend/backend API layer.
+
+Example for a student record:
+
+```sql
+INSERT INTO STUDENT (StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB)
+VALUES ('S10', 'Ahmed', 'Ali', 'REG010', 'ahmed.ali@example.com', 'BSCS', 2024, TO_DATE('2004-08-10', 'YYYY-MM-DD'));
+
+SELECT * FROM STUDENT;
+
+UPDATE STUDENT
+SET Email = 'ahmed.updated@example.com'
+WHERE StudentID = 'S10';
+
+DELETE FROM STUDENT
+WHERE StudentID = 'S10';
+```
 
 ## Git Ignore
 
