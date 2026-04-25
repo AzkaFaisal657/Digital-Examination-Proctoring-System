@@ -387,18 +387,12 @@ Work was committed in multiple logical steps (not one big commit), including:
 
 This helps trace progress clearly for team collaboration.
 
-## 14) What a Partner Should Know Immediately
-
-If a new partner starts today, they should do this:
-
 1. Read README.md and this file.
 2. Import sql/schema.sql.
 3. Import sql/sample_data.sql.
 4. Set backend/.env values.
 5. Start backend and open frontend.
 6. Test one CRUD cycle per table group.
-
-After this, they can confidently explain architecture, schema, and CRUD flow.
 
 ## 15) Final Note
 
