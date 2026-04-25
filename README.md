@@ -194,6 +194,3 @@ The project excludes:
 - .env
 - *.log
 
-## License
-
-MIT
