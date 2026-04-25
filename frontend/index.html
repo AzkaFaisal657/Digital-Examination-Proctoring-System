@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Examination & Proctoring System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">DE</div>
+        <div>
+          <h1>Exam Hub</h1>
+          <p>Proctoring Console</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu" id="navMenu">
+        <button class="nav-item active" data-view="dashboard"><i class="bi bi-grid"></i> Dashboard</button>
+        <button class="nav-item" data-view="students"><i class="bi bi-people"></i> Students</button>
+        <button class="nav-item" data-view="exams"><i class="bi bi-file-earmark-text"></i> Exams</button>
+        <button class="nav-item" data-view="courses"><i class="bi bi-journal-bookmark"></i> Courses</button>
+        <button class="nav-item" data-view="departments"><i class="bi bi-diagram-3"></i> Departments</button>
+        <button class="nav-item" data-view="proctors"><i class="bi bi-shield-check"></i> Proctors</button>
+        <button class="nav-item" data-view="attempts"><i class="bi bi-arrow-repeat"></i> Attempts</button>
+        <button class="nav-item" data-view="results"><i class="bi bi-bar-chart"></i> Results</button>
+        <button class="nav-item" data-view="violations"><i class="bi bi-exclamation-triangle"></i> Violations</button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle">Overview of key metrics and recent activity</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="ghost-btn" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+      </header>
+
+      <section id="dashboardView" class="view active"></section>
+      <section id="moduleView" class="view"></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="formModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Form</h3>
+        <button class="icon-btn" id="closeModalBtn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="entityForm" class="modal-form"></form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="confirmModal">
+    <div class="confirm-card">
+      <h3>Confirm Delete</h3>
+      <p id="confirmText">Are you sure you want to delete this record?</p>
+      <div class="confirm-actions">
+        <button class="ghost-btn" id="cancelDeleteBtn">Cancel</button>
+        <button class="danger-btn" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
