@@ -1,6 +1,4 @@
 -- Digital Examination & Proctoring System
--- Oracle XE schema (beginner-friendly version)
-
 -- =========================
 -- 1) Strong Entities
 -- =========================
@@ -86,6 +84,9 @@ CREATE TABLE PROCTOR (
 
 CREATE TABLE EXAM_SESSION (
     SessionID      VARCHAR2(20) PRIMARY KEY,
+    AttemptNo      NUMBER(3) NOT NULL,
+    StudentID      VARCHAR2(20) NOT NULL,
+    ExamID         VARCHAR2(20) NOT NULL,
     StartTime      TIMESTAMP,
     EndTime        TIMESTAMP,
     Status         VARCHAR2(20) CHECK (Status IN ('Active', 'Completed', 'Terminated')),
@@ -126,6 +127,13 @@ CREATE TABLE ATTEMPT (
         REFERENCES EXAM(ExamID)
 );
 
+ALTER TABLE EXAM_SESSION
+ADD CONSTRAINT uq_exam_session_attempt UNIQUE (AttemptNo, StudentID, ExamID);
+
+ALTER TABLE EXAM_SESSION
+ADD CONSTRAINT fk_session_attempt FOREIGN KEY (AttemptNo, StudentID, ExamID)
+    REFERENCES ATTEMPT(AttemptNo, StudentID, ExamID);
+
 CREATE TABLE RESULT (
     ResultID         VARCHAR2(20) NOT NULL,
     AttemptNo        NUMBER(3) NOT NULL,
@@ -136,6 +144,7 @@ CREATE TABLE RESULT (
     Status           VARCHAR2(10) CHECK (Status IN ('Pass', 'Fail')),
     PublishedDate    DATE,
     PRIMARY KEY (ResultID, AttemptNo, StudentID),
+    CONSTRAINT uq_result_attempt UNIQUE (AttemptNo, StudentID, ExamID),
     CONSTRAINT fk_result_attempt FOREIGN KEY (AttemptNo, StudentID, ExamID)
         REFERENCES ATTEMPT(AttemptNo, StudentID, ExamID),
     CONSTRAINT fk_result_exam FOREIGN KEY (ExamID)

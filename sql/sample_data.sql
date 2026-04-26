@@ -79,14 +79,14 @@ VALUES ('P01', 'Associate Professor');
 INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
 VALUES ('P02', 'Teaching Assistant');
 
-INSERT INTO EXAM_SESSION (SessionID, StartTime, EndTime, Status, IPAddress, BrowserInfo)
-VALUES ('SS01', SYSTIMESTAMP, SYSTIMESTAMP, 'Active', '127.0.0.1', 'Chrome');
-
 INSERT INTO ATTEMPT (AttemptNo, StudentID, ExamID, AttemptDate, Status)
 VALUES (1, 'S01', 'E01', SYSDATE, 'Completed');
 
 INSERT INTO ATTEMPT (AttemptNo, StudentID, ExamID, AttemptDate, Status)
 VALUES (1, 'S02', 'E01', SYSDATE, 'Completed');
+
+INSERT INTO EXAM_SESSION (SessionID, AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo)
+VALUES ('SS01', 1, 'S01', 'E01', SYSTIMESTAMP, SYSTIMESTAMP, 'Active', '127.0.0.1', 'Chrome');
 
 INSERT INTO RESULT (ResultID, AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate)
 VALUES ('R01', 1, 'S01', 'E01', 45, 'A', 'Pass', SYSDATE);
