@@ -67,12 +67,15 @@ const modules = {
     subtitle: "Human and AI proctor records.",
     endpoint: "proctors",
     idKey: "PROCTORID",
-    fields: ["ProctorID", "Name", "Email", "Role"],
+    fields: ["ProctorID", "Name", "Email", "Role", "Designation", "AlgorithmVersion", "ModelName"],
     formFields: [
       { name: "ProctorID", required: true },
       { name: "Name", required: true },
       { name: "Email", type: "email" },
-      { name: "Role", options: ["Faculty", "TA", "External"] },
+      { name: "Role", options: ["Faculty", "TA", "External"], required: true, full: true },
+      { name: "Designation", required: true, full: true },
+      { name: "AlgorithmVersion", required: true, full: true },
+      { name: "ModelName", required: true, full: true },
     ],
   },
   attempts: {
@@ -131,6 +134,7 @@ let currentModule = null;
 let currentData = [];
 let filterData = [];
 let pendingDelete = null;
+let proctorWizardKind = null;
 
 const navMenu = document.getElementById("navMenu");
 const pageTitle = document.getElementById("pageTitle");
@@ -263,6 +267,26 @@ async function showDashboard() {
 
 function getFieldValue(row, name) {
   return row[name.toUpperCase()] ?? row[name] ?? "";
+}
+
+function getProctorKindFromRecord(record) {
+  return getFieldValue(record, "Role") === "AI" ? "AI" : "Human";
+}
+
+function isProctorModule(config) {
+  return config.endpoint === "proctors";
+}
+
+function getProctorRecordKind(record) {
+  return getFieldValue(record, "Role") === "AI" ? "AI" : "Human";
+}
+
+function getProctorFields(kind) {
+  if (kind === "AI") {
+    return ["ProctorID", "Name", "AlgorithmVersion", "ModelName"];
+  }
+
+  return ["ProctorID", "Name", "Email", "Role", "Designation"];
 }
 
 function buildModuleLayout(config) {
@@ -413,7 +437,7 @@ async function showModule(moduleKey) {
 function fieldInput(field, value = "") {
   if (field.options) {
     return `
-      <select name="${field.name}" ${field.required ? "required" : ""}>
+      <select name="${field.name}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""}>
         <option value="">Select ${field.name}</option>
         ${field.options
           .map((option) => `<option value="${option}" ${String(value) === option ? "selected" : ""}>${option}</option>`)
@@ -423,16 +447,149 @@ function fieldInput(field, value = "") {
   }
 
   if (field.type === "textarea") {
-    return `<textarea name="${field.name}" rows="3">${normalizeValue(value)}</textarea>`;
+    return `<textarea name="${field.name}" rows="3" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""}>${normalizeValue(value)}</textarea>`;
   }
 
   const inputType = field.type || "text";
   const formattedDate = inputType === "date" && value ? normalizeValue(value).slice(0, 10) : normalizeValue(value);
-  return `<input type="${inputType}" name="${field.name}" value="${formattedDate}" ${field.required ? "required" : ""} />`;
+  return `<input type="${inputType}" name="${field.name}" value="${formattedDate}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""} />`;
+}
+
+function renderProctorWizardStepOne() {
+  modalTitle.textContent = "Add Proctor";
+  entityForm.innerHTML = `
+    <div class="wizard-intro full">
+      <h4>Choose Proctor Type</h4>
+      <p>Select the type first. The next screen will only show the matching fields.</p>
+    </div>
+    <div class="wizard-choice-grid full">
+      <button type="button" class="wizard-choice ${proctorWizardKind === "Human" ? "active" : ""}" data-proctor-kind="Human">
+        <strong>Human Proctor</strong>
+        <span>Faculty, TA, or External</span>
+      </button>
+      <button type="button" class="wizard-choice ${proctorWizardKind === "AI" ? "active" : ""}" data-proctor-kind="AI">
+        <strong>AI Proctor</strong>
+        <span>Algorithm version and model name</span>
+      </button>
+    </div>
+    <div class="form-actions full">
+      <button type="button" class="ghost-btn" id="cancelFormBtn">Cancel</button>
+      <button type="button" class="primary-btn" id="continueProctorBtn" ${proctorWizardKind ? "" : "disabled"}>Continue</button>
+    </div>
+  `;
+
+  entityForm.querySelectorAll("[data-proctor-kind]").forEach((button) => {
+    button.addEventListener("click", () => {
+      proctorWizardKind = button.dataset.proctorKind;
+      renderProctorWizardStepOne();
+    });
+  });
+
+  document.getElementById("cancelFormBtn").addEventListener("click", () => toggleModal(false));
+  document.getElementById("continueProctorBtn").addEventListener("click", () => {
+    if (proctorWizardKind) {
+      renderProctorWizardStepTwo();
+    }
+  });
+}
+
+function renderProctorWizardStepTwo(record = null) {
+  const kind = proctorWizardKind || (record ? getProctorRecordKind(record) : null);
+  if (!kind) {
+    renderProctorWizardStepOne();
+    return;
+  }
+
+  const fieldsToRender = getProctorFields(kind);
+  const isEdit = Boolean(record);
+  modalTitle.textContent = `${isEdit ? "Edit" : "Add"} ${kind} Proctor`;
+
+  entityForm.innerHTML = `
+    <div class="wizard-summary full">
+      <span class="wizard-badge">${kind} Proctor</span>
+      <p>${kind === "AI" ? "Enter the AI identity and model details." : "Enter the human proctor identity and designation."}</p>
+    </div>
+    ${fieldsToRender
+      .map((fieldName) => {
+        const field = modules.proctors.formFields.find((item) => item.name === fieldName);
+        const currentValue = record ? getFieldValue(record, field.name) : "";
+        const disableOnEdit = isEdit && field.name === "ProctorID";
+
+        return `
+          <div class="form-group ${field.full ? "full" : ""}">
+            <label>${field.name}</label>
+            ${fieldInput(field, currentValue).replace(
+              ">",
+              disableOnEdit ? " disabled>" : ">"
+            )}
+          </div>
+        `;
+      })
+      .join("")}
+    <div class="form-actions full">
+      <button type="button" class="ghost-btn" id="backProctorBtn">Back</button>
+      <button type="submit" class="primary-btn">${isEdit ? "Update" : "Create"}</button>
+    </div>
+  `;
+
+  document.getElementById("backProctorBtn").addEventListener("click", () => {
+    renderProctorWizardStepOne();
+  });
 }
 
 function openForm(config, record = null) {
   const isEdit = Boolean(record);
+
+  if (isProctorModule(config)) {
+    proctorWizardKind = record ? getProctorRecordKind(record) : null;
+    if (isEdit) {
+      renderProctorWizardStepTwo(record);
+    } else {
+      renderProctorWizardStepOne();
+    }
+    entityForm.onsubmit = async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(entityForm);
+      const payload = Object.fromEntries(formData.entries());
+
+      for (const key of Object.keys(payload)) {
+        if (payload[key] === "") {
+          payload[key] = null;
+        }
+      }
+
+      payload.Role = proctorWizardKind === "AI" ? "AI" : payload.Role;
+
+      if (proctorWizardKind === "AI") {
+        payload.Email = null;
+        payload.Designation = null;
+      } else {
+        payload.AlgorithmVersion = null;
+        payload.ModelName = null;
+      }
+
+      try {
+        if (isEdit) {
+          const idValue = getFieldValue(record, config.idKey);
+          await apiCall(`${config.endpoint}/${idValue}`, "PUT", payload);
+          showToast(`${config.title.slice(0, -1)} updated`);
+        } else {
+          await apiCall(config.endpoint, "POST", payload);
+          showToast(`${config.title.slice(0, -1)} created`);
+        }
+
+        toggleModal(false);
+        await showModule(currentModule);
+      } catch (error) {
+        showToast(error.message, "error");
+      }
+    };
+
+    toggleModal(true);
+    return;
+  }
+
   modalTitle.textContent = `${isEdit ? "Edit" : "Add"} ${config.title.slice(0, -1)}`;
 
   entityForm.innerHTML = `
@@ -440,9 +597,10 @@ function openForm(config, record = null) {
       .map((field) => {
         const currentValue = record ? getFieldValue(record, field.name) : "";
         const disableOnEdit = isEdit && ((config.composite && config.keyFields.includes(field.name)) || (!config.composite && field.name.toUpperCase() === config.idKey));
+        const hiddenClass = field.showWhen && (!record || getFieldValue(record, field.showWhen.field) !== field.showWhen.value) ? " hidden" : "";
 
         return `
-          <div class="form-group ${field.full ? "full" : ""}">
+          <div class="form-group ${field.full ? "full" : ""}${hiddenClass}" data-field-group="${field.name}"${field.showWhen ? ` data-show-field="${field.showWhen.field}" data-show-value="${field.showWhen.value}"` : ""}>
             <label>${field.name}</label>
             ${fieldInput(field, currentValue).replace(
               ">",
@@ -459,6 +617,31 @@ function openForm(config, record = null) {
   `;
 
   document.getElementById("cancelFormBtn").addEventListener("click", () => toggleModal(false));
+
+  const dependentFields = Array.from(entityForm.querySelectorAll("[data-show-field]"));
+  const updateFieldVisibility = () => {
+    dependentFields.forEach((group) => {
+      const showField = group.dataset.showField;
+      const showValue = group.dataset.showValue;
+      const control = entityForm.querySelector(`[name="${showField}"]`);
+      const visible = control && control.value === showValue;
+      group.classList.toggle("hidden", !visible);
+
+      const input = group.querySelector("input, textarea, select");
+      if (input) {
+        input.required = visible && input.dataset.baseRequired === "true";
+        if (!visible) {
+          input.value = "";
+        }
+      }
+    });
+  };
+
+  const proctorKindSelect = entityForm.querySelector('[name="ProctorKind"]');
+  if (proctorKindSelect) {
+    proctorKindSelect.addEventListener("change", updateFieldVisibility);
+    updateFieldVisibility();
+  }
 
   entityForm.onsubmit = async (event) => {
     event.preventDefault();

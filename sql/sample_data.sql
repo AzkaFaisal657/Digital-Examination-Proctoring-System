@@ -73,11 +73,17 @@ VALUES ('P01', 'Dr. Nida', 'nida@example.com', 'Faculty');
 INSERT INTO PROCTOR (ProctorID, Name, Email, Role)
 VALUES ('P02', 'Arslan', 'arslan@example.com', 'TA');
 
+INSERT INTO PROCTOR (ProctorID, Name, Email, Role)
+VALUES ('P03', 'AI Invigilator', NULL, 'AI');
+
 INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
 VALUES ('P01', 'Associate Professor');
 
 INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
 VALUES ('P02', 'Teaching Assistant');
+
+INSERT INTO AI_PROCTOR (ProctorID, AlgorithmVersion, ModelName)
+VALUES ('P03', 'v1.2.0', 'VisionProctorNet');
 
 INSERT INTO ATTEMPT (AttemptNo, StudentID, ExamID, AttemptDate, Status)
 VALUES (1, 'S01', 'E01', SYSDATE, 'Completed');
@@ -144,5 +150,8 @@ VALUES ('SS01', 'P01');
 
 INSERT INTO MONITORED_BY (SessionID, ProctorID)
 VALUES ('SS01', 'P02');
+
+INSERT INTO MONITORED_BY (SessionID, ProctorID)
+VALUES ('SS01', 'P03');
 
 COMMIT;

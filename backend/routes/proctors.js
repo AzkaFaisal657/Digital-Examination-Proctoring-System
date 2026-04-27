@@ -8,9 +8,17 @@ router.get("/", async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.execute(
-      `SELECT ProctorID, Name, Email, Role
-       FROM PROCTOR
-       ORDER BY ProctorID`
+          `SELECT p.ProctorID,
+            p.Name,
+            p.Email,
+            p.Role,
+            hp.Designation,
+            ap.AlgorithmVersion,
+            ap.ModelName
+           FROM PROCTOR p
+           LEFT JOIN HUMAN_PROCTOR hp ON hp.ProctorID = p.ProctorID
+           LEFT JOIN AI_PROCTOR ap ON ap.ProctorID = p.ProctorID
+       ORDER BY p.ProctorID`
     );
     res.status(200).json(result.rows);
   } catch (error) {
@@ -25,17 +33,43 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { ProctorID, Name, Email, Role } = req.body;
+    const { ProctorID, Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
+    const emailValue = Role === "AI" ? null : Email;
+
+    if (Role === "AI" && (!AlgorithmVersion || !ModelName)) {
+      return res.status(400).json({ error: "AlgorithmVersion and ModelName are required for AI proctors" });
+    }
 
     connection = await getConnection();
     await connection.execute(
       `INSERT INTO PROCTOR (ProctorID, Name, Email, Role)
        VALUES (:ProctorID, :Name, :Email, :Role)`,
-      { ProctorID, Name, Email, Role }
+      { ProctorID, Name, Email: emailValue, Role },
+      { autoCommit: false }
     );
 
+    if (Role === "AI") {
+      await connection.execute(
+        `INSERT INTO AI_PROCTOR (ProctorID, AlgorithmVersion, ModelName)
+         VALUES (:ProctorID, :AlgorithmVersion, :ModelName)`,
+        { ProctorID, AlgorithmVersion, ModelName },
+        { autoCommit: false }
+      );
+    } else {
+      await connection.execute(
+        `INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
+         VALUES (:ProctorID, :Designation)`,
+        { ProctorID, Designation },
+        { autoCommit: false }
+      );
+    }
+
+    await connection.commit();
     res.status(201).json({ message: "Proctor created successfully" });
   } catch (error) {
+    if (connection) {
+      await connection.rollback().catch(() => {});
+    }
     res.status(500).json({ error: error.message });
   } finally {
     if (connection) {
@@ -47,7 +81,12 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   let connection;
   try {
-    const { Name, Email, Role } = req.body;
+    const { Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
+    const emailValue = Role === "AI" ? null : Email;
+
+    if (Role === "AI" && (!AlgorithmVersion || !ModelName)) {
+      return res.status(400).json({ error: "AlgorithmVersion and ModelName are required for AI proctors" });
+    }
 
     connection = await getConnection();
     const result = await connection.execute(
@@ -56,15 +95,48 @@ router.put("/:id", async (req, res) => {
            Email = :Email,
            Role = :Role
        WHERE ProctorID = :id`,
-      { Name, Email, Role, id: req.params.id }
+      { Name, Email: emailValue, Role, id: req.params.id },
+      { autoCommit: false }
     );
 
     if (result.rowsAffected === 0) {
+      await connection.rollback();
       return res.status(404).json({ message: "Proctor not found" });
     }
 
+    await connection.execute(
+      `DELETE FROM HUMAN_PROCTOR WHERE ProctorID = :id`,
+      { id: req.params.id },
+      { autoCommit: false }
+    );
+    await connection.execute(
+      `DELETE FROM AI_PROCTOR WHERE ProctorID = :id`,
+      { id: req.params.id },
+      { autoCommit: false }
+    );
+
+    if (Role === "AI") {
+      await connection.execute(
+        `INSERT INTO AI_PROCTOR (ProctorID, AlgorithmVersion, ModelName)
+         VALUES (:ProctorID, :AlgorithmVersion, :ModelName)`,
+        { ProctorID: req.params.id, AlgorithmVersion, ModelName },
+        { autoCommit: false }
+      );
+    } else {
+      await connection.execute(
+        `INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
+         VALUES (:ProctorID, :Designation)`,
+        { ProctorID: req.params.id, Designation },
+        { autoCommit: false }
+      );
+    }
+
+    await connection.commit();
     res.status(200).json({ message: "Proctor updated successfully" });
   } catch (error) {
+    if (connection) {
+      await connection.rollback().catch(() => {});
+    }
     res.status(500).json({ error: error.message });
   } finally {
     if (connection) {

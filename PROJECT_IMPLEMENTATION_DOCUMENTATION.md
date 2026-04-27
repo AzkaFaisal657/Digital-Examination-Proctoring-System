@@ -108,6 +108,8 @@ It includes:
 - AI_PROCTOR (child of PROCTOR)
 - STUDENT_PHONE (multivalued attribute table)
 
+AI proctors are stored as a PROCTOR row plus an AI_PROCTOR subtype row. The subtype keeps the AI-specific metadata such as AlgorithmVersion and ModelName so a monitored session can be traced back to the exact AI setup used at that time.
+
 ### 4.5) M:N Junction Tables Implemented
 
 - ENROLLED_IN

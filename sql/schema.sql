@@ -79,7 +79,7 @@ CREATE TABLE PROCTOR (
     ProctorID     VARCHAR2(20) PRIMARY KEY,
     Name          VARCHAR2(120) NOT NULL,
     Email         VARCHAR2(120) UNIQUE,
-    Role          VARCHAR2(20) CHECK (Role IN ('Faculty', 'TA', 'External'))
+    Role          VARCHAR2(20) CHECK (Role IN ('Faculty', 'TA', 'External', 'AI'))
 );
 
 CREATE TABLE EXAM_SESSION (
