@@ -37,7 +37,7 @@ Digital Examination & Proctoring System/
 ├── frontend/
 │   ├── app.js
 │   ├── index.html
-│   └── styles.css
+│   ├──styles.css
 │   └── icon.png
 ├── sql/
 │   └── schema.sql
