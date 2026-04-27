@@ -34,9 +34,13 @@ router.post("/", async (req, res) => {
   let connection;
   try {
     const { ProctorID, Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
-    const emailValue = Role === "AI" ? null : Email;
+    const isAIProctor = Role === "AI" || Boolean(AlgorithmVersion || ModelName);
+    const effectiveRole = isAIProctor ? "AI" : Role;
+    const emailValue = isAIProctor ? null : Email;
 
-    if (Role === "AI" && (!AlgorithmVersion || !ModelName)) {
+    console.log("POST /proctors - Received:", { ProctorID, Name, Email, Role, Designation, AlgorithmVersion, ModelName, isAIProctor });
+
+    if (isAIProctor && (!AlgorithmVersion || !ModelName)) {
       return res.status(400).json({ error: "AlgorithmVersion and ModelName are required for AI proctors" });
     }
 
@@ -44,29 +48,36 @@ router.post("/", async (req, res) => {
     await connection.execute(
       `INSERT INTO PROCTOR (ProctorID, Name, Email, Role)
        VALUES (:ProctorID, :Name, :Email, :Role)`,
-      { ProctorID, Name, Email: emailValue, Role },
+      { ProctorID, Name, Email: emailValue, Role: effectiveRole },
       { autoCommit: false }
     );
+    console.log("✓ PROCTOR row inserted:", ProctorID);
 
-    if (Role === "AI") {
+    if (isAIProctor) {
+      console.log("→ Inserting AI_PROCTOR:", { ProctorID, AlgorithmVersion, ModelName });
       await connection.execute(
         `INSERT INTO AI_PROCTOR (ProctorID, AlgorithmVersion, ModelName)
          VALUES (:ProctorID, :AlgorithmVersion, :ModelName)`,
         { ProctorID, AlgorithmVersion, ModelName },
         { autoCommit: false }
       );
+      console.log("✓ AI_PROCTOR row inserted:", ProctorID);
     } else {
+      console.log("→ Inserting HUMAN_PROCTOR:", { ProctorID, Designation });
       await connection.execute(
         `INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
          VALUES (:ProctorID, :Designation)`,
         { ProctorID, Designation },
         { autoCommit: false }
       );
+      console.log("✓ HUMAN_PROCTOR row inserted:", ProctorID);
     }
 
     await connection.commit();
+    console.log("✓ Transaction committed for:", ProctorID);
     res.status(201).json({ message: "Proctor created successfully" });
   } catch (error) {
+    console.error("✗ Error in POST /proctors:", error.message);
     if (connection) {
       await connection.rollback().catch(() => {});
     }
@@ -82,9 +93,11 @@ router.put("/:id", async (req, res) => {
   let connection;
   try {
     const { Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
-    const emailValue = Role === "AI" ? null : Email;
+    const isAIProctor = Role === "AI" || Boolean(AlgorithmVersion || ModelName);
+    const effectiveRole = isAIProctor ? "AI" : Role;
+    const emailValue = isAIProctor ? null : Email;
 
-    if (Role === "AI" && (!AlgorithmVersion || !ModelName)) {
+    if (isAIProctor && (!AlgorithmVersion || !ModelName)) {
       return res.status(400).json({ error: "AlgorithmVersion and ModelName are required for AI proctors" });
     }
 
@@ -95,7 +108,7 @@ router.put("/:id", async (req, res) => {
            Email = :Email,
            Role = :Role
        WHERE ProctorID = :id`,
-      { Name, Email: emailValue, Role, id: req.params.id },
+      { Name, Email: emailValue, Role: effectiveRole, id: req.params.id },
       { autoCommit: false }
     );
 
@@ -115,7 +128,7 @@ router.put("/:id", async (req, res) => {
       { autoCommit: false }
     );
 
-    if (Role === "AI") {
+    if (isAIProctor) {
       await connection.execute(
         `INSERT INTO AI_PROCTOR (ProctorID, AlgorithmVersion, ModelName)
          VALUES (:ProctorID, :AlgorithmVersion, :ModelName)`,

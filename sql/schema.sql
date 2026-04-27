@@ -79,8 +79,34 @@ CREATE TABLE PROCTOR (
     ProctorID     VARCHAR2(20) PRIMARY KEY,
     Name          VARCHAR2(120) NOT NULL,
     Email         VARCHAR2(120) UNIQUE,
-    Role          VARCHAR2(20) CHECK (Role IN ('Faculty', 'TA', 'External', 'AI'))
+    Role          VARCHAR2(20) CONSTRAINT ck_proctor_role CHECK (Role IN ('Faculty', 'TA', 'External', 'AI'))
 );
+
+-- Migration for existing databases that still have the old role check without 'AI'.
+DECLARE
+    v_role_constraint VARCHAR2(128);
+BEGIN
+    SELECT c.constraint_name
+      INTO v_role_constraint
+      FROM user_constraints c
+      JOIN user_cons_columns cc
+        ON c.constraint_name = cc.constraint_name
+       AND c.owner = cc.owner
+     WHERE c.table_name = 'PROCTOR'
+       AND c.constraint_type = 'C'
+       AND cc.column_name = 'ROLE'
+       AND ROWNUM = 1;
+
+    EXECUTE IMMEDIATE 'ALTER TABLE PROCTOR DROP CONSTRAINT ' || v_role_constraint;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        NULL;
+END;
+/
+
+ALTER TABLE PROCTOR
+ADD CONSTRAINT ck_proctor_role
+CHECK (Role IN ('Faculty', 'TA', 'External', 'AI'));
 
 CREATE TABLE EXAM_SESSION (
     SessionID      VARCHAR2(20) PRIMARY KEY,

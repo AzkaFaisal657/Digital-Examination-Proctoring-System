@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = window.location.protocol === "file:"
+  ? "http://localhost:5000/api"
+  : `${window.location.origin}/api`;
 
 const modules = {
   students: {
@@ -502,6 +504,7 @@ function renderProctorWizardStepTwo(record = null) {
 
   const fieldsToRender = getProctorFields(kind);
   const isEdit = Boolean(record);
+  console.log("🎨 Rendering Proctor Wizard Step 2 - kind:", kind, "fieldsToRender:", fieldsToRender);
   modalTitle.textContent = `${isEdit ? "Edit" : "Add"} ${kind} Proctor`;
 
   entityForm.innerHTML = `
@@ -531,6 +534,8 @@ function renderProctorWizardStepTwo(record = null) {
       <button type="submit" class="primary-btn">${isEdit ? "Update" : "Create"}</button>
     </div>
   `;
+  console.log("✅ Form HTML set, entityForm.innerHTML length:", entityForm.innerHTML.length);
+  console.log("✅ entityForm element:", entityForm);
 
   document.getElementById("backProctorBtn").addEventListener("click", () => {
     renderProctorWizardStepOne();
@@ -549,9 +554,12 @@ function openForm(config, record = null) {
     }
     entityForm.onsubmit = async (event) => {
       event.preventDefault();
+      console.log("🔵 PROCTOR FORM SUBMITTED - event.target:", event.target);
 
       const formData = new FormData(entityForm);
+      console.log("📋 FormData entries:", Array.from(formData.entries()));
       const payload = Object.fromEntries(formData.entries());
+      console.log("📦 Payload before cleanup:", payload);
 
       for (const key of Object.keys(payload)) {
         if (payload[key] === "") {
@@ -560,6 +568,7 @@ function openForm(config, record = null) {
       }
 
       payload.Role = proctorWizardKind === "AI" ? "AI" : payload.Role;
+      console.log("👤 proctorWizardKind:", proctorWizardKind, "→ Role:", payload.Role);
 
       if (proctorWizardKind === "AI") {
         payload.Email = null;
@@ -569,12 +578,15 @@ function openForm(config, record = null) {
         payload.ModelName = null;
       }
 
+      console.log("📤 FINAL PAYLOAD TO SEND:", payload);
+
       try {
         if (isEdit) {
           const idValue = getFieldValue(record, config.idKey);
           await apiCall(`${config.endpoint}/${idValue}`, "PUT", payload);
           showToast(`${config.title.slice(0, -1)} updated`);
         } else {
+          console.log("🚀 Posting to", config.endpoint);
           await apiCall(config.endpoint, "POST", payload);
           showToast(`${config.title.slice(0, -1)} created`);
         }
@@ -582,6 +594,7 @@ function openForm(config, record = null) {
         toggleModal(false);
         await showModule(currentModule);
       } catch (error) {
+        console.error("❌ ERROR:", error);
         showToast(error.message, "error");
       }
     };

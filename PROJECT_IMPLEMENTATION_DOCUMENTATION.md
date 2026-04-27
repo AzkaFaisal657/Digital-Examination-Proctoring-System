@@ -165,6 +165,7 @@ backend/server.js:
 
 - Starts Express server
 - Enables JSON and CORS middleware
+- Serves the frontend app from the backend root URL
 - Adds health endpoint: /api/health
 - Mounts route modules under /api/*
 
@@ -247,6 +248,8 @@ frontend/index.html provides:
 - Confirmation modal for delete
 - Toast notifications for feedback
 
+The frontend is now served through the backend at http://localhost:5000/ so the browser stays on an HTTP origin and API calls work reliably.
+
 ### 7.2) Styling
 
 frontend/styles.css provides:
@@ -266,6 +269,17 @@ frontend/app.js provides:
 - Modal form submit handling
 - Delete confirmation handling
 - Toast messages for success/error
+
+Current proctor workflow:
+
+1. Click Add Proctor.
+2. Choose Human Proctor or AI Proctor in Step 1.
+3. Step 2 shows only the matching fields.
+4. Human proctors use Email, Role, and Designation.
+5. AI proctors use AlgorithmVersion and ModelName.
+6. AI proctors do not use Email because they are stored as algorithm records, not people.
+
+The submit flow sends one payload to the backend and the backend writes both the PROCTOR base row and the matching subtype row in the same transaction.
 
 How data flows:
 
@@ -301,11 +315,12 @@ Mapping used in this project:
    npm install
    npm start
 
-6. Open frontend/index.html in browser (or Live Server).
+6. Open http://localhost:5000/ in the browser.
 
 Quick test URLs:
 
 - http://localhost:5000/api/health
+- http://localhost:5000/
 - http://localhost:5000/api/students
 
 ## 10) Demo Script for Evaluation
@@ -363,6 +378,16 @@ Fix:
 
 - Skip re-running or clear tables before reinsert.
 
+### Issue E: Cannot GET / in the browser
+
+Cause:
+
+- The app was opened from the filesystem instead of the backend HTTP server.
+
+Fix:
+
+- Open http://localhost:5000/ so Express serves the frontend directly.
+
 ## 12) EERD Fidelity Notes
 
 Implementation follows EERD concepts:
@@ -374,7 +399,15 @@ Implementation follows EERD concepts:
 
 Documented practical simplification:
 
-- Proctor role is captured through Role attribute in PROCTOR, while HUMAN_PROCTOR and AI_PROCTOR tables still support specialization structure.
+- Proctor role is captured through Role attribute in PROCTOR, while HUMAN_PROCTOR and AI_PROCTOR tables support the specialization structure.
+- AI proctors are persisted as PROCTOR plus AI_PROCTOR so model metadata stays normalized and queryable.
+
+Proctor schema detail:
+
+- PROCTOR holds ProctorID, Name, Email, and Role.
+- HUMAN_PROCTOR holds ProctorID and Designation.
+- AI_PROCTOR holds ProctorID, AlgorithmVersion, and ModelName.
+- The Role constraint now allows Faculty, TA, External, and AI.
 
 ## 13) Git and Commit History Summary
 
@@ -389,12 +422,14 @@ Work was committed in multiple logical steps (not one big commit), including:
 
 This helps trace progress clearly for team collaboration.
 
-1. Read README.md and this file.
-2. Import sql/schema.sql.
-3. Import sql/sample_data.sql.
-4. Set backend/.env values.
-5. Start backend and open frontend.
-6. Test one CRUD cycle per table group.
+Current workflow summary:
+
+1. Run the backend from the backend folder.
+2. Open http://localhost:5000/.
+3. Use the sidebar to reach Proctors.
+4. Use the two-step wizard for Human or AI proctors.
+5. Verify AI proctors create both PROCTOR and AI_PROCTOR rows.
+6. Use the API health endpoint and the module tables to confirm the app is working end to end.
 
 ## 15) Final Note
 
