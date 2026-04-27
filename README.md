@@ -38,6 +38,7 @@ Digital Examination & Proctoring System/
 │   ├── app.js
 │   ├── index.html
 │   └── styles.css
+│   └── icon.png
 ├── sql/
 │   └── schema.sql
 ├── .gitignore
