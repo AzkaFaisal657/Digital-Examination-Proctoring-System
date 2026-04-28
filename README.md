@@ -104,11 +104,24 @@ GET http://localhost:5000/api/health
 
 The frontend is static (no framework).
 
-Option 1 (simple):
-- Open frontend/index.html directly in browser.
+Recommended (serve via backend):
 
-Option 2 (recommended):
-- Use VS Code Live Server extension and run frontend/index.html.
+1. Start the backend (see "Backend Setup" above):
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+2. Open the app in your browser at:
+
+```
+http://localhost:5000/
+```
+
+Notes:
+- Do NOT open `frontend/index.html` directly using `file://` — modern browsers treat `file:` origins as unique security origins and requests to `http://` APIs may be blocked. Serve the UI via the backend (above) or use a local static server (Live Server) so API calls work reliably.
 
 Frontend connects to backend APIs at:
 
