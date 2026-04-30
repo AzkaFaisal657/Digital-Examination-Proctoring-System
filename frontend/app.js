@@ -129,6 +129,124 @@ const modules = {
       { name: "CategoryID" },
     ],
   },
+  instructors: {
+    title: "Instructors",
+    subtitle: "Faculty and instructor management.",
+    endpoint: "instructors",
+    idKey: "INSTRUCTORID",
+    fields: ["InstructorID", "FirstName", "LastName", "Email", "Designation", "Specialization"],
+    formFields: [
+      { name: "InstructorID", required: true },
+      { name: "FirstName", required: true },
+      { name: "LastName", required: true },
+      { name: "Email", type: "email", required: true },
+      { name: "Designation" },
+      { name: "Specialization" },
+    ],
+  },
+  questionbanks: {
+    title: "Question Banks",
+    subtitle: "Repository of question banks by instructor.",
+    endpoint: "questionbanks",
+    idKey: "BANKID",
+    fields: ["BankID", "BankName", "Subject", "CreatedDate", "InstructorID"],
+    formFields: [
+      { name: "BankID", required: true },
+      { name: "BankName", required: true },
+      { name: "Subject" },
+      { name: "InstructorID", required: true },
+    ],
+  },
+  questions: {
+    title: "Questions",
+    subtitle: "Question records in the banks.",
+    endpoint: "questions",
+    idKey: "QUESTIONID",
+    fields: ["QuestionID", "QuestionText", "DifficultyLevel", "Marks", "BankID"],
+    formFields: [
+      { name: "QuestionID", required: true },
+      { name: "QuestionText", type: "textarea", required: true, full: true },
+      { name: "DifficultyLevel", options: ["Easy", "Medium", "Hard"] },
+      { name: "Marks", type: "number", required: true },
+      { name: "BankID", required: true },
+      { name: "Type", options: ["MCQ", "Subjective"], required: true, full: true },
+      { name: "CorrectOptionCount", type: "number" },
+      { name: "WordLimit", type: "number" },
+      { name: "ModelAnswer", type: "textarea" },
+    ],
+  },
+  answers: {
+    title: "Answers",
+    subtitle: "Answer options for MCQ questions.",
+    endpoint: "answers",
+    composite: true,
+    keyFields: ["QuestionID", "OptionLabel"],
+    fields: ["QuestionID", "OptionLabel", "AnswerText", "IsCorrect"],
+    formFields: [
+      { name: "QuestionID", required: true },
+      { name: "OptionLabel", options: ["A", "B", "C", "D"], required: true },
+      { name: "AnswerText", type: "textarea", required: true, full: true },
+      { name: "IsCorrect", options: ["Y", "N"], required: true },
+    ],
+  },
+  examsessions: {
+    title: "Exam Sessions",
+    subtitle: "Active and completed exam sessions for students.",
+    endpoint: "examsessions",
+    idKey: "SESSIONID",
+    fields: ["SessionID", "AttemptNo", "StudentID", "ExamID", "StartTime", "EndTime", "Status", "IPAddress", "BrowserInfo"],
+    formFields: [
+      { name: "SessionID", required: true },
+      { name: "AttemptNo", type: "number", required: true },
+      { name: "StudentID", required: true },
+      { name: "ExamID", required: true },
+      { name: "StartTime", type: "datetime-local" },
+      { name: "EndTime", type: "datetime-local" },
+      { name: "Status", options: ["Active", "Completed", "Terminated"] },
+      { name: "IPAddress" },
+      { name: "BrowserInfo" },
+    ],
+  },
+  notifications: {
+    title: "Notifications",
+    subtitle: "Student notifications and reminders.",
+    endpoint: "notifications",
+    composite: true,
+    readOnlyUpdate: true,
+    keyFields: ["NotifID", "StudentID"],
+    fields: ["NotifID", "StudentID", "Message", "Type", "NotifTimestamp", "IsRead"],
+    formFields: [
+      { name: "NotifID", required: true },
+      { name: "StudentID", required: true },
+      { name: "Message", type: "textarea", required: true, full: true },
+      { name: "Type", options: ["Reminder", "Result", "Violation Alert"], required: true },
+      { name: "IsRead", options: ["Y", "N"] },
+    ],
+  },
+  violationcategories: {
+    title: "Violation Categories",
+    subtitle: "Categorize and manage proctoring violation types.",
+    endpoint: "violationcategories",
+    idKey: "CATEGORYID",
+    fields: ["CategoryID", "CategoryName", "DefaultSeverity"],
+    formFields: [
+      { name: "CategoryID", required: true },
+      { name: "CategoryName", required: true },
+      { name: "DefaultSeverity", options: ["Low", "Medium", "High"], required: true },
+    ],
+  },
+  studentphones: {
+    title: "Student Phones",
+    subtitle: "Emergency contact phone numbers for students.",
+    endpoint: "studentphones",
+    composite: true,
+    keyFields: ["StudentID", "PhoneNo"],
+    fields: ["StudentID", "PhoneNo"],
+    formFields: [
+      { name: "StudentID", required: true },
+      { name: "PhoneNo", required: true },
+    ],
+  },
 };
 
 let currentView = "dashboard";
@@ -224,11 +342,21 @@ function renderDashboard(stats) {
   dashboardView.innerHTML = `
     <div class="cards-grid">
       <article class="stat-card"><h4>Total Students</h4><p class="value">${stats.students}</p></article>
-      <article class="stat-card"><h4>Total Exams</h4><p class="value">${stats.exams}</p></article>
-      <article class="stat-card"><h4>Total Violations</h4><p class="value">${stats.violations}</p></article>
+      <article class="stat-card"><h4>Total Instructors</h4><p class="value">${stats.instructors}</p></article>
+      <article class="stat-card"><h4>Total Departments</h4><p class="value">${stats.departments}</p></article>
       <article class="stat-card"><h4>Total Courses</h4><p class="value">${stats.courses}</p></article>
+      <article class="stat-card"><h4>Total Exams</h4><p class="value">${stats.exams}</p></article>
+      <article class="stat-card"><h4>Total Question Banks</h4><p class="value">${stats.questionbanks}</p></article>
+      <article class="stat-card"><h4>Total Questions</h4><p class="value">${stats.questions}</p></article>
+      <article class="stat-card"><h4>Total Answers</h4><p class="value">${stats.answers}</p></article>
+      <article class="stat-card"><h4>Total Exam Sessions</h4><p class="value">${stats.examsessions}</p></article>
+      <article class="stat-card"><h4>Total Notifications</h4><p class="value">${stats.notifications}</p></article>
+      <article class="stat-card"><h4>Total Violation Categories</h4><p class="value">${stats.violationcategories}</p></article>
+      <article class="stat-card"><h4>Total Student Phones</h4><p class="value">${stats.studentphones}</p></article>
       <article class="stat-card"><h4>Total Proctors</h4><p class="value">${stats.proctors}</p></article>
+      <article class="stat-card"><h4>Total Attempts</h4><p class="value">${stats.attempts}</p></article>
       <article class="stat-card"><h4>Total Results</h4><p class="value">${stats.results}</p></article>
+      <article class="stat-card"><h4>Total Violations</h4><p class="value">${stats.violations}</p></article>
     </div>
   `;
 }
@@ -244,25 +372,62 @@ async function showDashboard() {
   moduleView.classList.remove("active");
 
   try {
-    const [students, exams, violations, courses, proctors, results] = await Promise.all([
+    const [students, instructors, departments, courses, exams, questionbanks, questions, answers, examsessions, notifications, violationcategories, studentphones, proctors, attempts, results, violations] = await Promise.all([
       apiCall("students"),
-      apiCall("exams"),
-      apiCall("violations"),
+      apiCall("instructors"),
+      apiCall("departments"),
       apiCall("courses"),
+      apiCall("exams"),
+      apiCall("questionbanks"),
+      apiCall("questions"),
+      apiCall("answers"),
+      apiCall("examsessions"),
+      apiCall("notifications"),
+      apiCall("violationcategories"),
+      apiCall("studentphones"),
       apiCall("proctors"),
+      apiCall("attempts"),
       apiCall("results"),
+      apiCall("violations"),
     ]);
 
     renderDashboard({
       students: students.length,
-      exams: exams.length,
-      violations: violations.length,
+      instructors: instructors.length,
+      departments: departments.length,
       courses: courses.length,
+      exams: exams.length,
+      questionbanks: questionbanks.length,
+      questions: questions.length,
+      answers: answers.length,
+      examsessions: examsessions.length,
+      notifications: notifications.length,
+      violationcategories: violationcategories.length,
+      studentphones: studentphones.length,
+      violations: violations.length,
       proctors: proctors.length,
+      attempts: attempts.length,
       results: results.length,
     });
   } catch (error) {
-    renderDashboard({ students: 0, exams: 0, violations: 0, courses: 0, proctors: 0, results: 0 });
+    renderDashboard({
+      students: 0,
+      instructors: 0,
+      departments: 0,
+      courses: 0,
+      exams: 0,
+      questionbanks: 0,
+      questions: 0,
+      answers: 0,
+      examsessions: 0,
+      notifications: 0,
+      violationcategories: 0,
+      studentphones: 0,
+      violations: 0,
+      proctors: 0,
+      attempts: 0,
+      results: 0,
+    });
     showToast(error.message, "error");
   }
 }

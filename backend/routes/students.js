@@ -8,7 +8,8 @@ router.get("/", async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.execute(
-      `SELECT StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB
+      `SELECT StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB,
+              FLOOR(MONTHS_BETWEEN(SYSDATE, DOB) / 12) AS Age
        FROM STUDENT
        ORDER BY StudentID`
     );
@@ -27,7 +28,8 @@ router.get("/:id", async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.execute(
-      `SELECT StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB
+      `SELECT StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB,
+              FLOOR(MONTHS_BETWEEN(SYSDATE, DOB) / 12) AS Age
        FROM STUDENT
        WHERE StudentID = :id`,
       { id: req.params.id }

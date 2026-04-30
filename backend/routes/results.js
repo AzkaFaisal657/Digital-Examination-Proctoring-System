@@ -8,9 +8,11 @@ router.get("/", async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.execute(
-      `SELECT ResultID, AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate
-       FROM RESULT
-       ORDER BY StudentID, AttemptNo, ResultID`
+      `SELECT r.ResultID, r.AttemptNo, r.StudentID, r.ExamID, r.MarksObtained, r.Grade, r.Status, r.PublishedDate,
+              e.TotalMarks, ROUND((r.MarksObtained / e.TotalMarks) * 100, 2) AS Percentage
+       FROM RESULT r
+       JOIN EXAM e ON r.ExamID = e.ExamID
+       ORDER BY r.StudentID, r.AttemptNo, r.ResultID`
     );
     res.status(200).json(result.rows);
   } catch (error) {
