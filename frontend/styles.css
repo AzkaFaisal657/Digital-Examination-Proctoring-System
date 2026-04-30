@@ -1,14 +1,14 @@
 :root {
-  --bg-main: #d6d6d6;
-  --bg-panel: #f0f0f0;
-  --bg-card: #ffffff;
-  --bg-elevated: #ececec;
-  --text-main: #1f2329;
-  --text-muted: #636a73;
-  --line: #c9c9c9;
-  --shadow: 0 10px 24px rgba(31, 35, 41, 0.1);
-  --accent: #6a6a6a;
-  --accent-strong: #414141;
+  --bg-main: #bfbfbf;
+  --bg-panel: #e6e6e6;
+  --bg-card: #f6f6f6;
+  --bg-elevated: #e0e0e0;
+  --text-main: #15171a;
+  --text-muted: #4a5056;
+  --line: #a8a8a8;
+  --shadow: 0 10px 24px rgba(31, 35, 41, 0.16);
+  --accent: #585858;
+  --accent-strong: #2e2e2e;
   --danger: #bb3a3a;
   --success: #2e7f54;
   --radius-lg: 16px;
@@ -26,9 +26,9 @@ body {
   font-family: "IBM Plex Sans", sans-serif;
   color: var(--text-main);
   background:
-    radial-gradient(circle at 10% 10%, #efefef 0%, transparent 25%),
-    radial-gradient(circle at 90% 90%, #f8f8f8 0%, transparent 25%),
-    linear-gradient(135deg, #cfcfcf 0%, #dcdcdc 40%, #e7e7e7 100%);
+    radial-gradient(circle at 10% 10%, rgba(0,0,0,0.02) 0%, transparent 25%),
+    radial-gradient(circle at 90% 90%, rgba(0,0,0,0.02) 0%, transparent 25%),
+    linear-gradient(135deg, var(--bg-main) 0%, var(--bg-panel) 40%, var(--bg-card) 100%);
   min-height: 100vh;
 }
 
@@ -40,7 +40,7 @@ body {
 
 .sidebar {
   border-right: 1px solid var(--line);
-  background: linear-gradient(180deg, #f8f8f8 0%, #ebebeb 100%);
+  background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-elevated) 100%);
   padding: 26px 18px;
   position: sticky;
   top: 0;
@@ -61,7 +61,7 @@ body {
   border-radius: 12px;
   display: block;
   object-fit: contain;
-  background: #fff;
+  background: var(--bg-card);
   padding: 2px;
   box-shadow:
     inset 0 0 0 1px rgba(31, 35, 41, 0.1),
@@ -103,13 +103,13 @@ body {
 }
 
 .nav-item:hover {
-  background: #f4f4f4;
+  background: var(--bg-elevated);
   border-color: var(--line);
 }
 
 .nav-item.active {
-  background: #ffffff;
-  border-color: #bcbcbc;
+  background: var(--bg-card);
+  border-color: var(--line);
   box-shadow: var(--shadow);
 }
 
@@ -199,7 +199,7 @@ body {
 }
 
 .stat-card {
-  background: linear-gradient(150deg, #ffffff 0%, #f4f4f4 100%);
+  background: linear-gradient(150deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 18px;
@@ -235,7 +235,7 @@ body {
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   min-width: 180px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .table-wrap {
@@ -255,14 +255,14 @@ th,
 td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--bg-elevated);
   font-size: 0.92rem;
   white-space: nowrap;
 }
 
 th {
-  background: #f6f6f6;
-  color: #444;
+  background: var(--bg-panel);
+  color: var(--text-main);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -289,7 +289,7 @@ th {
 .modal-card,
 .confirm-card {
   width: min(680px, 95vw);
-  background: #f9f9f9;
+  background: var(--bg-panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
@@ -346,7 +346,7 @@ th {
 .wizard-choice {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
   padding: 16px;
   text-align: left;
   cursor: pointer;
@@ -379,7 +379,7 @@ th {
 
 .wizard-summary {
   grid-column: span 2;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px 14px;
@@ -392,7 +392,7 @@ th {
   width: fit-content;
   border-radius: 999px;
   padding: 5px 10px;
-  background: #ececec;
+  background: var(--bg-elevated);
   border: 1px solid var(--line);
   font-size: 0.8rem;
   font-weight: 700;
