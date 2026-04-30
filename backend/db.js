@@ -31,4 +31,38 @@ async function getConnection() {
   return connection;
 }
 
-module.exports = { getConnection };
+function convertPositionalBinds(sql) {
+  let index = 0;
+  return sql.replace(/\?/g, () => `:${++index}`);
+}
+
+// Backwards-compatible query helper for routes that expect db.query(sql, params, cb)
+async function query(sql, params, cb) {
+  let connection;
+  try {
+    connection = await getConnection();
+    // allow optional params
+    const binds = params && !(typeof params === 'function') ? params : [];
+    const callback = typeof params === 'function' ? params : cb;
+    const hasArrayBinds = Array.isArray(binds);
+    const statement = hasArrayBinds ? convertPositionalBinds(sql) : sql;
+    const result = await connection.execute(statement, binds, {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+      autoCommit: true,
+    });
+    // If a callback is provided, call it (older routes expect callback style)
+    if (typeof callback === 'function') {
+      return callback(null, result.rows);
+    }
+    return result.rows;
+  } catch (err) {
+    if (typeof cb === 'function') return cb(err);
+    throw err;
+  } finally {
+    if (connection) {
+      try { await connection.close(); } catch (_) {}
+    }
+  }
+}
+
+module.exports = { getConnection, query };
