@@ -47,13 +47,26 @@ Main files inside backend:
 - backend/db.js
 - backend/package.json
 - backend/routes/students.js
+- backend/routes/instructors.js
 - backend/routes/exams.js
+- backend/routes/questionbanks.js
+- backend/routes/questions.js
+- backend/routes/answers.js
+- backend/routes/examsessions.js
+- backend/routes/notifications.js
+- backend/routes/violationcategories.js
+- backend/routes/studentphones.js
 - backend/routes/attempts.js
 - backend/routes/results.js
 - backend/routes/violations.js
 - backend/routes/proctors.js
 - backend/routes/departments.js
 - backend/routes/courses.js
+- backend/routes/enrolledin.js
+- backend/routes/teaches.js
+- backend/routes/drawsfrom.js
+- backend/routes/includedin.js
+- backend/routes/monitoredby.js
 
 Main files inside frontend:
 
@@ -65,6 +78,12 @@ Main files inside sql:
 
 - sql/schema.sql
 - sql/sample_data.sql
+
+Current validated state:
+
+- The backend is currently serving the API on port 5000.
+- The dashboard fetches counts from all current entity modules.
+- The sample data is populated for the new tables, including exam sessions, notifications, question banks, questions, answers, violation categories, and student phones.
 
 ## 4) Database Implementation (Oracle)
 
@@ -206,24 +225,46 @@ Notes:
 Implemented API modules:
 
 - /api/students
+- /api/instructors
 - /api/exams
+- /api/questionbanks
+- /api/questions
+- /api/answers
+- /api/examsessions
+- /api/notifications
+- /api/violationcategories
+- /api/studentphones
 - /api/attempts
 - /api/results
 - /api/violations
 - /api/proctors
 - /api/departments
 - /api/courses
+- /api/enrolledin
+- /api/teaches
+- /api/drawsfrom
+- /api/includedin
+- /api/monitoredby
 
 Operation coverage:
 
 - Students: GET all, GET by ID, POST, PUT, DELETE
+- Instructors: GET all, GET by ID, POST, PUT, DELETE
 - Exams: GET all, GET by ID, POST, PUT, DELETE
+- Question banks: GET all, GET by ID, POST, PUT, DELETE
+- Questions: GET all, GET by ID, POST, PUT, DELETE
+- Answers: GET all, GET by question, GET by composite key, POST, PUT, DELETE
+- Exam sessions: GET all, GET by ID, POST, PUT, DELETE
+- Notifications: GET all, GET by student, POST, mark as read, DELETE
+- Violation categories: GET all, GET by ID, POST, PUT, DELETE
+- Student phones: GET all, GET by student, POST, PUT, DELETE
 - Attempts: GET all, POST, PUT, DELETE
 - Results: GET all, POST, PUT, DELETE
 - Violations: GET all, POST, DELETE
 - Proctors: GET all, POST, PUT, DELETE
 - Departments: GET all, POST, PUT, DELETE
 - Courses: GET all, POST, PUT, DELETE
+- Junction tables: GET all, GET by parent/child, POST, DELETE
 
 ### 6.6) SQL Simplicity (Beginner-Friendly)
 
@@ -247,6 +288,17 @@ frontend/index.html provides:
 - Reusable form modal for create/update
 - Confirmation modal for delete
 - Toast notifications for feedback
+
+The sidebar now includes the expanded entity set from the EERD:
+
+- Instructors
+- Question Banks
+- Questions
+- Answers
+- Exam Sessions
+- Notifications
+- Violation Categories
+- Student Phones
 
 The frontend is now served through the backend at http://localhost:5000/ so the browser stays on an HTTP origin and API calls work reliably.
 
@@ -317,6 +369,11 @@ Mapping used in this project:
 
 6. Open http://localhost:5000/ in the browser.
 
+Verification tip:
+
+- If you open the project from the root folder, `npm start` will fail because the root does not contain the backend `package.json`.
+- Always start the server from `backend/`.
+
 Quick test URLs:
 
 - http://localhost:5000/api/health
@@ -378,6 +435,16 @@ Fix:
 
 - Skip re-running or clear tables before reinsert.
 
+### Issue E: Backend crashes with ORA-00904 on EXAM_SESSION
+
+Cause:
+
+- The live database schema is missing the `AttemptNo`, `StudentID`, or `ExamID` columns that the new routes use.
+
+Fix:
+
+- Apply the EXAM_SESSION migration so the live schema matches `sql/schema.sql`.
+
 ### Issue E: Cannot GET / in the browser
 
 Cause:
@@ -426,10 +493,29 @@ Current workflow summary:
 
 1. Run the backend from the backend folder.
 2. Open http://localhost:5000/.
-3. Use the sidebar to reach Proctors.
+3. Use the sidebar to reach the new modules as well as Proctors.
 4. Use the two-step wizard for Human or AI proctors.
 5. Verify AI proctors create both PROCTOR and AI_PROCTOR rows.
 6. Use the API health endpoint and the module tables to confirm the app is working end to end.
+
+Current checked counts during validation:
+
+- Students: 5
+- Instructors: 4
+- Departments: 3
+- Courses: 4
+- Exams: 4
+- Question Banks: 4
+- Questions: 10
+- Answers: 17
+- Exam Sessions: 6
+- Notifications: 6
+- Violation Categories: 5
+- Student Phones: 7
+- Proctors: 7
+- Attempts: 6
+- Results: 6
+- Violations: 5
 
 ## 15) Final Note
 

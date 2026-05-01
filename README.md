@@ -6,9 +6,10 @@ Digital Examination & Proctoring System is a beginner-friendly full-stack databa
 
 This project includes:
 
-- Oracle XE relational database schema based on EERD design.
-- Node.js + Express backend APIs with Oracle connection using the oracledb package.
+- Oracle XE relational database schema based on the EERD design.
+- Node.js + Express backend APIs with Oracle connection using the `oracledb` package.
 - Vanilla HTML/CSS/JS frontend dashboard with tables, search/filter, modals, and toast notifications.
+- Expanded modules for instructors, question banks, questions, answers, exam sessions, notifications, violation categories, and student phones.
 
 ## Tech Stack
 
@@ -22,14 +23,27 @@ This project includes:
 Digital Examination & Proctoring System/
 ├── backend/
 │   ├── routes/
-│   │   ├── attempts.js
-│   │   ├── courses.js
-│   │   ├── departments.js
-│   │   ├── exams.js
-│   │   ├── proctors.js
-│   │   ├── results.js
-│   │   ├── students.js
-│   │   └── violations.js
+	│   │   ├── answers.js
+	│   │   ├── attempts.js
+	│   │   ├── courses.js
+	│   │   ├── departments.js
+	│   │   ├── drawsfrom.js
+	│   │   ├── enrolledin.js
+	│   │   ├── exams.js
+	│   │   ├── examsessions.js
+	│   │   ├── includedin.js
+	│   │   ├── instructors.js
+	│   │   ├── monitoredby.js
+	│   │   ├── notifications.js
+	│   │   ├── proctors.js
+	│   │   ├── questionbanks.js
+	│   │   ├── questions.js
+	│   │   ├── results.js
+	│   │   ├── studentphones.js
+	│   │   ├── students.js
+	│   │   ├── teaches.js
+	│   │   ├── violationcategories.js
+	│   │   └── violations.js
 │   ├── .env
 │   ├── db.js
 │   ├── package.json
@@ -40,6 +54,7 @@ Digital Examination & Proctoring System/
 │   ├──styles.css
 │   └── icon.png
 ├── sql/
+│   ├── sample_data.sql
 │   └── schema.sql
 ├── .gitignore
 └── README.md
@@ -80,9 +95,9 @@ PORT=5000
 
 ## Backend Setup
 
-From project root:
+From the project root:
 
-```
+```powershell
 cd backend
 npm install
 npm start
@@ -133,14 +148,27 @@ http://localhost:5000/api
 
 Implemented modules:
 
-- /api/students
-- /api/exams
-- /api/attempts
-- /api/results
-- /api/violations
-- /api/proctors
-- /api/departments
-- /api/courses
+- `/api/students`
+- `/api/instructors`
+- `/api/departments`
+- `/api/courses`
+- `/api/exams`
+- `/api/questionbanks`
+- `/api/questions`
+- `/api/answers`
+- `/api/examsessions`
+- `/api/notifications`
+- `/api/violationcategories`
+- `/api/studentphones`
+- `/api/proctors`
+- `/api/attempts`
+- `/api/results`
+- `/api/violations`
+- `/api/enrolledin`
+- `/api/teaches`
+- `/api/drawsfrom`
+- `/api/includedin`
+- `/api/monitoredby`
 
 Examples:
 
@@ -153,11 +181,21 @@ Examples:
 - Departments: GET all, POST, PUT, DELETE
 - Courses: GET all, POST, PUT, DELETE
 
+## Current Status
+
+The current verified setup includes:
+
+- Expanded backend routes for the new EERD entities.
+- Frontend navigation for the same entities.
+- A dashboard that shows counts for students, instructors, departments, courses, exams, question banks, questions, answers, exam sessions, notifications, violation categories, student phones, proctors, attempts, results, and violations.
+- Oracle XE sample data that populates the demo tables.
+
 ## Notes
 
 - Oracle syntax is used (VARCHAR2, NUMBER, SYSDATE, SYSTIMESTAMP, TO_DATE).
 - IDs are modeled as VARCHAR2 for simplicity.
 - Some weak entity routes use composite keys in request body for update/delete operations.
+- The backend must be started from the `backend/` folder because the root folder does not contain a Node `package.json`.
 
 ## Phase 2 Alignment
 
