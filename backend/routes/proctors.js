@@ -11,12 +11,11 @@ router.get("/", async (req, res) => {
           `SELECT p.ProctorID,
             p.Name,
             p.Role,
-            hp.Email,
-            hp.Designation,
+            NULL as Email,
+            NULL as Designation,
             ap.AlgorithmVersion,
             ap.ModelName
            FROM PROCTOR p
-           LEFT JOIN HUMAN_PROCTOR hp ON hp.ProctorID = p.ProctorID
            LEFT JOIN AI_PROCTOR ap ON ap.ProctorID = p.ProctorID
        ORDER BY p.ProctorID`
     );

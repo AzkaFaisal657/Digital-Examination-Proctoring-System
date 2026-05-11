@@ -18,7 +18,14 @@ router.get("/", async (req, res) => {
        INNER JOIN QUESTION q ON q.QuestionID = sq.QuestionID
        ORDER BY sq.QuestionID`
     );
-    res.status(200).json(result.rows);
+    // Transform column names to match frontend expectations
+    const transformed = result.rows.map(row => ({
+      QuestionID: row.QUESTIONID,
+      QuestionText: row.QUESTIONTEXT,
+      ModelAnswer: row.MODELANSWER,
+      WordLimit: row.WORDLIMIT
+    }));
+    res.status(200).json(transformed);
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
@@ -48,7 +55,15 @@ router.get("/:id", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Subjective answer not found" });
     }
-    res.status(200).json(result.rows[0]);
+    
+    const row = result.rows[0];
+    const transformed = {
+      QuestionID: row.QUESTIONID,
+      QuestionText: row.QUESTIONTEXT,
+      ModelAnswer: row.MODELANSWER,
+      WordLimit: row.WORDLIMIT
+    };
+    res.status(200).json(transformed);
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
