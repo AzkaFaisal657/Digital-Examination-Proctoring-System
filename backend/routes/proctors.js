@@ -10,8 +10,8 @@ router.get("/", async (req, res) => {
     const result = await connection.execute(
           `SELECT p.ProctorID,
             p.Name,
-            p.Email,
             p.Role,
+            hp.Email,
             hp.Designation,
             ap.AlgorithmVersion,
             ap.ModelName
@@ -46,9 +46,9 @@ router.post("/", async (req, res) => {
 
     connection = await getConnection();
     await connection.execute(
-      `INSERT INTO PROCTOR (ProctorID, Name, Email, Role)
-       VALUES (:ProctorID, :Name, :Email, :Role)`,
-      { ProctorID, Name, Email: emailValue, Role: effectiveRole },
+      `INSERT INTO PROCTOR (ProctorID, Name, Role)
+       VALUES (:ProctorID, :Name, :Role)`,
+      { ProctorID, Name, Role: effectiveRole },
       { autoCommit: false }
     );
     console.log("✓ PROCTOR row inserted:", ProctorID);
@@ -63,11 +63,11 @@ router.post("/", async (req, res) => {
       );
       console.log("✓ AI_PROCTOR row inserted:", ProctorID);
     } else {
-      console.log("→ Inserting HUMAN_PROCTOR:", { ProctorID, Designation });
+      console.log("→ Inserting HUMAN_PROCTOR:", { ProctorID, Email: emailValue, Designation });
       await connection.execute(
-        `INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
-         VALUES (:ProctorID, :Designation)`,
-        { ProctorID, Designation },
+        `INSERT INTO HUMAN_PROCTOR (ProctorID, Email, Designation)
+         VALUES (:ProctorID, :Email, :Designation)`,
+        { ProctorID, Email: emailValue, Designation },
         { autoCommit: false }
       );
       console.log("✓ HUMAN_PROCTOR row inserted:", ProctorID);
@@ -105,10 +105,9 @@ router.put("/:id", async (req, res) => {
     const result = await connection.execute(
       `UPDATE PROCTOR
        SET Name = :Name,
-           Email = :Email,
            Role = :Role
        WHERE ProctorID = :id`,
-      { Name, Email: emailValue, Role: effectiveRole, id: req.params.id },
+      { Name, Role: effectiveRole, id: req.params.id },
       { autoCommit: false }
     );
 
@@ -137,9 +136,9 @@ router.put("/:id", async (req, res) => {
       );
     } else {
       await connection.execute(
-        `INSERT INTO HUMAN_PROCTOR (ProctorID, Designation)
-         VALUES (:ProctorID, :Designation)`,
-        { ProctorID: req.params.id, Designation },
+        `INSERT INTO HUMAN_PROCTOR (ProctorID, Email, Designation)
+         VALUES (:ProctorID, :Email, :Designation)`,
+        { ProctorID: req.params.id, Email: emailValue, Designation },
         { autoCommit: false }
       );
     }

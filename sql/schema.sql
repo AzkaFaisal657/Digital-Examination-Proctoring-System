@@ -78,7 +78,6 @@ CREATE TABLE QUESTION (
 CREATE TABLE PROCTOR (
     ProctorID     VARCHAR2(20) PRIMARY KEY,
     Name          VARCHAR2(120) NOT NULL,
-    Email         VARCHAR2(120) UNIQUE,
     Role          VARCHAR2(20) CONSTRAINT ck_proctor_role CHECK (Role IN ('Faculty', 'TA', 'External', 'AI'))
 );
 
@@ -225,6 +224,7 @@ CREATE TABLE SUBJECTIVE_QUESTION (
 
 CREATE TABLE HUMAN_PROCTOR (
     ProctorID      VARCHAR2(20) PRIMARY KEY,
+    Email          VARCHAR2(120) UNIQUE,
     Designation    VARCHAR2(100),
     CONSTRAINT fk_human_proctor FOREIGN KEY (ProctorID)
         REFERENCES PROCTOR(ProctorID)

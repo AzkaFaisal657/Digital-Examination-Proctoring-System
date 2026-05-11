@@ -1,96 +1,170 @@
 const express = require("express");
-const router = express.Router();
-const db = require("../db");
+const { getConnection } = require("../db");
 
-// GET all exam sessions
-router.get("/", (req, res) => {
-  const query = `
-    SELECT 
-      SessionID, AttemptNo, StudentID, ExamID, 
-      StartTime, EndTime, Status, IPAddress, BrowserInfo
-    FROM EXAM_SESSION
-    ORDER BY StartTime DESC
-  `;
-  
-  db.query(query, (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+const router = express.Router();
+
+// GET all exam sessions with monitoring proctors
+router.get("/", async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const result = await connection.execute(
+      `SELECT 
+        es.SessionID,
+        es.AttemptNo,
+        es.StudentID,
+        es.ExamID,
+        es.StartTime,
+        es.EndTime,
+        es.Status,
+        es.IPAddress,
+        es.BrowserInfo,
+        LISTAGG(mb.ProctorID, ', ') WITHIN GROUP (ORDER BY mb.ProctorID) AS MonitoringProctors
+       FROM EXAM_SESSION es
+       LEFT JOIN MONITORED_BY mb ON es.SessionID = mb.SessionID
+       GROUP BY es.SessionID, es.AttemptNo, es.StudentID, es.ExamID, 
+                es.StartTime, es.EndTime, es.Status, es.IPAddress, es.BrowserInfo
+       ORDER BY es.StartTime DESC`
+    );
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (connection) {
+      await connection.close();
     }
-    res.json(results);
-  });
+  }
 });
 
-// GET single exam session
-router.get("/:id", (req, res) => {
-  const query = `
-    SELECT 
-      SessionID, AttemptNo, StudentID, ExamID, 
-      StartTime, EndTime, Status, IPAddress, BrowserInfo
-    FROM EXAM_SESSION
-    WHERE SessionID = ?
-  `;
-  
-  db.query(query, [req.params.id], (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    if (results.length === 0) {
+// GET single exam session with monitoring proctors
+router.get("/:id", async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const result = await connection.execute(
+      `SELECT 
+        es.SessionID,
+        es.AttemptNo,
+        es.StudentID,
+        es.ExamID,
+        es.StartTime,
+        es.EndTime,
+        es.Status,
+        es.IPAddress,
+        es.BrowserInfo,
+        LISTAGG(mb.ProctorID, ', ') WITHIN GROUP (ORDER BY mb.ProctorID) AS MonitoringProctors
+       FROM EXAM_SESSION es
+       LEFT JOIN MONITORED_BY mb ON es.SessionID = mb.SessionID
+       WHERE es.SessionID = :id
+       GROUP BY es.SessionID, es.AttemptNo, es.StudentID, es.ExamID, 
+                es.StartTime, es.EndTime, es.Status, es.IPAddress, es.BrowserInfo`,
+      { id: req.params.id }
+    );
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "Session not found" });
     }
-    res.json(results[0]);
-  });
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
 });
 
 // CREATE new exam session
-router.post("/", (req, res) => {
-  const { SessionID, AttemptNo, StudentID, ExamID, StartTime, Status, IPAddress, BrowserInfo } = req.body;
-  
-  if (!SessionID || !AttemptNo || !StudentID || !ExamID || !Status) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-  
-  const query = `
-    INSERT INTO EXAM_SESSION 
-    (SessionID, AttemptNo, StudentID, ExamID, StartTime, Status, IPAddress, BrowserInfo)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-  
-  db.query(query, [SessionID, AttemptNo, StudentID, ExamID, StartTime, Status, IPAddress, BrowserInfo], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+router.post("/", async (req, res) => {
+  let connection;
+  try {
+    const { SessionID, AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo } = req.body;
+    
+    if (!SessionID || !AttemptNo || !StudentID || !ExamID || !Status) {
+      return res.status(400).json({ error: "SessionID, AttemptNo, StudentID, ExamID, and Status are required" });
     }
+
+    connection = await getConnection();
+    await connection.execute(
+      `INSERT INTO EXAM_SESSION (SessionID, AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo)
+       VALUES (:SessionID, :AttemptNo, :StudentID, :ExamID, :StartTime, :EndTime, :Status, :IPAddress, :BrowserInfo)`,
+      { SessionID, AttemptNo, StudentID, ExamID, StartTime: StartTime || null, EndTime: EndTime || null, Status, IPAddress: IPAddress || null, BrowserInfo: BrowserInfo || null },
+      { autoCommit: true }
+    );
     res.status(201).json({ message: "Session created successfully", SessionID });
-  });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
 });
 
 // UPDATE exam session
-router.put("/:id", (req, res) => {
-  const { EndTime, Status } = req.body;
-  
-  const query = `
-    UPDATE EXAM_SESSION
-    SET EndTime = ?, Status = ?
-    WHERE SessionID = ?
-  `;
-  
-  db.query(query, [EndTime, Status, req.params.id], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+router.put("/:id", async (req, res) => {
+  let connection;
+  try {
+    const { EndTime, Status } = req.body;
+
+    connection = await getConnection();
+    const result = await connection.execute(
+      `UPDATE EXAM_SESSION
+       SET EndTime = :EndTime, Status = :Status
+       WHERE SessionID = :id`,
+      { EndTime: EndTime || null, Status, id: req.params.id },
+      { autoCommit: true }
+    );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: "Session not found" });
     }
-    res.json({ message: "Session updated successfully" });
-  });
+    res.status(200).json({ message: "Session updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
 });
 
-// DELETE exam session
-router.delete("/:id", (req, res) => {
-  const query = `DELETE FROM EXAM_SESSION WHERE SessionID = ?`;
-  
-  db.query(query, [req.params.id], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+// DELETE exam session (will cascade delete MONITORED_BY records if FK has ON DELETE CASCADE)
+router.delete("/:id", async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    
+    // Delete related MONITORED_BY records first (if no cascade)
+    await connection.execute(
+      `DELETE FROM MONITORED_BY WHERE SessionID = :id`,
+      { id: req.params.id },
+      { autoCommit: false }
+    );
+
+    const result = await connection.execute(
+      `DELETE FROM EXAM_SESSION WHERE SessionID = :id`,
+      { id: req.params.id },
+      { autoCommit: false }
+    );
+
+    if (result.rowsAffected === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Session not found" });
     }
-    res.json({ message: "Session deleted successfully" });
-  });
+
+    await connection.commit();
+    res.status(200).json({ message: "Session deleted successfully" });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback().catch(() => {});
+    }
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
 });
 
 module.exports = router;

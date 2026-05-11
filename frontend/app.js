@@ -189,12 +189,28 @@ const modules = {
       { name: "IsCorrect", options: ["Y", "N"], required: true },
     ],
   },
+  subjectivequestions: {
+    title: "Subjective Questions",
+    subtitle: "Subjective questions with model answers and word limits.",
+    endpoint: "subjectivequestions",
+    idKey: "QUESTIONID",
+    fields: ["QuestionID", "QuestionText", "DifficultyLevel", "Marks", "BankID", "WordLimit", "ModelAnswer"],
+    formFields: [
+      { name: "QuestionID", required: true },
+      { name: "QuestionText", type: "textarea", required: true, full: true },
+      { name: "DifficultyLevel", options: ["Easy", "Medium", "Hard"] },
+      { name: "Marks", type: "number", required: true },
+      { name: "BankID", required: true },
+      { name: "WordLimit", type: "number", required: true },
+      { name: "ModelAnswer", type: "textarea", required: true, full: true },
+    ],
+  },
   examsessions: {
     title: "Exam Sessions",
     subtitle: "Active and completed exam sessions for students.",
     endpoint: "examsessions",
     idKey: "SESSIONID",
-    fields: ["SessionID", "AttemptNo", "StudentID", "ExamID", "StartTime", "EndTime", "Status", "IPAddress", "BrowserInfo"],
+    fields: ["SessionID", "AttemptNo", "StudentID", "ExamID", "StartTime", "EndTime", "Status", "IPAddress", "BrowserInfo", "MonitoringProctors"],
     formFields: [
       { name: "SessionID", required: true },
       { name: "AttemptNo", type: "number", required: true },
@@ -205,6 +221,7 @@ const modules = {
       { name: "Status", options: ["Active", "Completed", "Terminated"] },
       { name: "IPAddress" },
       { name: "BrowserInfo" },
+      { name: "MonitoringProctors" },
     ],
   },
   notifications: {
