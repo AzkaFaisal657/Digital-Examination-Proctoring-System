@@ -73,10 +73,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/", async (req, res) => {
+router.put("/:resultId/:attemptNo/:studentId", async (req, res) => {
   let connection;
   try {
-    const { ResultID, AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate } = req.body;
+    const { resultId, attemptNo, studentId } = req.params;
+    const { ExamID, MarksObtained, Grade, Status, PublishedDate } = req.body;
 
     connection = await getConnection();
     const result = await connection.execute(
@@ -89,7 +90,8 @@ router.put("/", async (req, res) => {
        WHERE ResultID = :ResultID
          AND AttemptNo = :AttemptNo
          AND StudentID = :StudentID`,
-      { ResultID, AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate }
+      { ResultID: resultId, AttemptNo: attemptNo, StudentID: studentId, ExamID, MarksObtained, Grade, Status, PublishedDate },
+      { autoCommit: true }
     );
 
     if (result.rowsAffected === 0) {
@@ -106,10 +108,10 @@ router.put("/", async (req, res) => {
   }
 });
 
-router.delete("/", async (req, res) => {
+router.delete("/:resultId/:attemptNo/:studentId", async (req, res) => {
   let connection;
   try {
-    const { ResultID, AttemptNo, StudentID } = req.body;
+    const { resultId, attemptNo, studentId } = req.params;
 
     connection = await getConnection();
     const result = await connection.execute(
@@ -117,7 +119,8 @@ router.delete("/", async (req, res) => {
        WHERE ResultID = :ResultID
          AND AttemptNo = :AttemptNo
          AND StudentID = :StudentID`,
-      { ResultID, AttemptNo, StudentID }
+      { ResultID: resultId, AttemptNo: attemptNo, StudentID: studentId },
+      { autoCommit: true }
     );
 
     if (result.rowsAffected === 0) {

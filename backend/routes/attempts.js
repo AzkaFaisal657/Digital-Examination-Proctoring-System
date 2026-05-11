@@ -44,10 +44,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/", async (req, res) => {
+router.put("/:attemptNo/:studentId/:examId", async (req, res) => {
   let connection;
   try {
-    const { AttemptNo, StudentID, ExamID, Status } = req.body;
+    const { attemptNo, studentId, examId } = req.params;
+    const { Status } = req.body;
 
     connection = await getConnection();
     const result = await connection.execute(
@@ -56,7 +57,8 @@ router.put("/", async (req, res) => {
        WHERE AttemptNo = :AttemptNo
          AND StudentID = :StudentID
          AND ExamID = :ExamID`,
-      { AttemptNo, StudentID, ExamID, Status }
+      { Status, AttemptNo: attemptNo, StudentID: studentId, ExamID: examId },
+      { autoCommit: true }
     );
 
     if (result.rowsAffected === 0) {
@@ -73,10 +75,10 @@ router.put("/", async (req, res) => {
   }
 });
 
-router.delete("/", async (req, res) => {
+router.delete("/:attemptNo/:studentId/:examId", async (req, res) => {
   let connection;
   try {
-    const { AttemptNo, StudentID, ExamID } = req.body;
+    const { attemptNo, studentId, examId } = req.params;
 
     connection = await getConnection();
     const result = await connection.execute(
@@ -84,7 +86,8 @@ router.delete("/", async (req, res) => {
        WHERE AttemptNo = :AttemptNo
          AND StudentID = :StudentID
          AND ExamID = :ExamID`,
-      { AttemptNo, StudentID, ExamID }
+      { AttemptNo: attemptNo, StudentID: studentId, ExamID: examId },
+      { autoCommit: true }
     );
 
     if (result.rowsAffected === 0) {

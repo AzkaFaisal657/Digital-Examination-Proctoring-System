@@ -44,17 +44,18 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.delete("/", async (req, res) => {
+router.delete("/:violationId/:sessionId", async (req, res) => {
   let connection;
   try {
-    const { ViolationID, SessionID } = req.body;
+    const { violationId, sessionId } = req.params;
 
     connection = await getConnection();
     const result = await connection.execute(
       `DELETE FROM VIOLATION
        WHERE ViolationID = :ViolationID
          AND SessionID = :SessionID`,
-      { ViolationID, SessionID }
+      { ViolationID: violationId, SessionID: sessionId },
+      { autoCommit: true }
     );
 
     if (result.rowsAffected === 0) {
