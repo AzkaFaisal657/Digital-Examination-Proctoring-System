@@ -852,7 +852,9 @@ function openForm(config, record = null) {
           for (const keyField of config.keyFields) {
             payload[keyField] = getFieldValue(record, keyField);
           }
-          await apiCall(config.endpoint, "PUT", payload);
+          // Build URL from composite key fields
+          const keyValues = config.keyFields.map(field => encodeURIComponent(payload[field])).join('/');
+          await apiCall(`${config.endpoint}/${keyValues}`, "PUT", payload);
         } else {
           const idValue = getFieldValue(record, config.idKey);
           await apiCall(`${config.endpoint}/${idValue}`, "PUT", payload);
@@ -885,7 +887,9 @@ async function handleDeleteConfirmed() {
   const { config, keyPayload } = pendingDelete;
   try {
     if (config.composite) {
-      await apiCall(config.endpoint, "DELETE", keyPayload);
+      // Build URL from composite key fields
+      const keyValues = config.keyFields.map(field => encodeURIComponent(keyPayload[field])).join('/');
+      await apiCall(`${config.endpoint}/${keyValues}`, "DELETE");
     } else {
       const idValue = keyPayload[config.idKey];
       await apiCall(`${config.endpoint}/${idValue}`, "DELETE");
