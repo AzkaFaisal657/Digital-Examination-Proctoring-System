@@ -75,10 +75,10 @@ router.put("/:id/read", (req, res) => {
 });
 
 // DELETE notification
-router.delete("/:id", (req, res) => {
-  const query = `DELETE FROM NOTIFICATION WHERE NotifID = ?`;
+router.delete("/:notifId/:studentId", (req, res) => {
+  const query = `DELETE FROM NOTIFICATION WHERE NotifID = ? AND StudentID = ?`;
   
-  db.query(query, [req.params.id], (err) => {
+  db.query(query, [req.params.notifId, req.params.studentId], (err) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
