@@ -25,16 +25,31 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { CourseID, CourseTitle, CreditHours, Semester, DeptID } = req.body;
+    const { CourseTitle, CreditHours, Semester, DeptID } = req.body;
+
+    if (!CourseTitle || CreditHours === undefined || CreditHours === null || !DeptID) {
+      return res.status(400).json({ error: "CourseTitle, CreditHours, and DeptID are required" });
+    }
+    if (isNaN(Number(CreditHours)) || Number(CreditHours) < 1 || Number(CreditHours) > 6) {
+      return res.status(400).json({ error: "CreditHours must be a number between 1 and 6" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate CourseID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(CourseID, '[0-9]+'))), 0) AS MAXNUM FROM COURSE WHERE REGEXP_LIKE(CourseID, '^CRS[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const CourseID = "CRS" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO COURSE (CourseID, CourseTitle, CreditHours, Semester, DeptID)
        VALUES (:CourseID, :CourseTitle, :CreditHours, :Semester, :DeptID)`,
-      { CourseID, CourseTitle, CreditHours, Semester, DeptID }
+      { CourseID, CourseTitle, CreditHours: Number(CreditHours), Semester: Semester || null, DeptID }
     );
 
-    res.status(201).json({ message: "Course created successfully" });
+    res.status(201).json({ message: "Course created successfully", CourseID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {

@@ -40,24 +40,29 @@ router.get("/:id", (req, res) => {
 });
 
 // CREATE new violation category
-router.post("/", (req, res) => {
-  const { CategoryID, CategoryName, DefaultSeverity } = req.body;
-  
-  if (!CategoryID || !CategoryName || !DefaultSeverity) {
-    return res.status(400).json({ message: "Missing required fields" });
+router.post("/", async (req, res) => {
+  const { CategoryName, DefaultSeverity } = req.body;
+
+  if (!CategoryName || !DefaultSeverity) {
+    return res.status(400).json({ error: "CategoryName and DefaultSeverity are required" });
   }
-  
-  const query = `
-    INSERT INTO VIOLATION_CATEGORY (CategoryID, CategoryName, DefaultSeverity)
-    VALUES (?, ?, ?)
-  `;
-  
-  db.query(query, [CategoryID, CategoryName, DefaultSeverity], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+
+  try {
+    // Auto-generate CategoryID
+    const existing = await db.query(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(CategoryID, '[0-9]+'))), 0) AS MAXNUM FROM VIOLATION_CATEGORY WHERE REGEXP_LIKE(CategoryID, '^CAT[0-9]+$')`
+    );
+    const nextNum = (existing[0].MAXNUM || 0) + 1;
+    const CategoryID = "CAT" + String(nextNum).padStart(3, "0");
+
+    await db.query(
+      `INSERT INTO VIOLATION_CATEGORY (CategoryID, CategoryName, DefaultSeverity) VALUES (?, ?, ?)`,
+      [CategoryID, CategoryName, DefaultSeverity]
+    );
     res.status(201).json({ message: "Violation category created successfully", CategoryID });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // UPDATE violation category

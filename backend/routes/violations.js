@@ -25,16 +25,28 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { ViolationID, SessionID, Severity, Description, EvidenceURL, CategoryID } = req.body;
+    const { SessionID, Severity, Description, EvidenceURL, CategoryID } = req.body;
+
+    if (!SessionID) {
+      return res.status(400).json({ error: "SessionID is required" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate ViolationID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(ViolationID, '[0-9]+'))), 0) AS MAXNUM FROM VIOLATION WHERE REGEXP_LIKE(ViolationID, '^VIO[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const ViolationID = "VIO" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO VIOLATION (ViolationID, SessionID, Severity, Description, EvidenceURL, CategoryID)
        VALUES (:ViolationID, :SessionID, :Severity, :Description, :EvidenceURL, :CategoryID)`,
-      { ViolationID, SessionID, Severity, Description, EvidenceURL, CategoryID }
+      { ViolationID, SessionID, Severity: Severity || null, Description: Description || null, EvidenceURL: EvidenceURL || null, CategoryID: CategoryID || null }
     );
 
-    res.status(201).json({ message: "Violation created successfully" });
+    res.status(201).json({ message: "Violation created successfully", ViolationID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {

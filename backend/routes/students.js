@@ -52,25 +52,34 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const {
-      StudentID,
-      FirstName,
-      LastName,
-      RegNo,
-      Email,
-      Program,
-      BatchYear,
-      DOB,
-    } = req.body;
+    const { FirstName, LastName, RegNo, Email, Program, BatchYear, DOB } = req.body;
+
+    if (!FirstName || !LastName || !DOB) {
+      return res.status(400).json({ error: "FirstName, LastName, and DOB are required" });
+    }
+    if (Email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+    if (BatchYear && (isNaN(BatchYear) || BatchYear < 1900 || BatchYear > 2100)) {
+      return res.status(400).json({ error: "BatchYear must be a valid 4-digit year" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate StudentID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(StudentID, '[0-9]+'))), 0) AS MAXNUM FROM STUDENT WHERE REGEXP_LIKE(StudentID, '^STU[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const StudentID = "STU" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO STUDENT (StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB)
        VALUES (:StudentID, :FirstName, :LastName, :RegNo, :Email, :Program, :BatchYear, TO_DATE(:DOB, 'YYYY-MM-DD'))`,
-      { StudentID, FirstName, LastName, RegNo, Email, Program, BatchYear, DOB }
+      { StudentID, FirstName, LastName, RegNo: RegNo || null, Email: Email || null, Program: Program || null, BatchYear: BatchYear || null, DOB }
     );
 
-    res.status(201).json({ message: "Student created successfully" });
+    res.status(201).json({ message: "Student created successfully", StudentID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {

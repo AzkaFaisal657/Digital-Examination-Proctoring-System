@@ -78,17 +78,28 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { SessionID, AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo } = req.body;
-    
-    if (!SessionID || !AttemptNo || !StudentID || !ExamID || !Status) {
-      return res.status(400).json({ error: "SessionID, AttemptNo, StudentID, ExamID, and Status are required" });
+    const { AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo } = req.body;
+
+    if (!AttemptNo || !StudentID || !ExamID || !Status) {
+      return res.status(400).json({ error: "AttemptNo, StudentID, ExamID, and Status are required" });
+    }
+    if (isNaN(Number(AttemptNo)) || Number(AttemptNo) < 1) {
+      return res.status(400).json({ error: "AttemptNo must be a positive integer" });
     }
 
     connection = await getConnection();
+
+    // Auto-generate SessionID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(SessionID, '[0-9]+'))), 0) AS MAXNUM FROM EXAM_SESSION WHERE REGEXP_LIKE(SessionID, '^SES[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const SessionID = "SES" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO EXAM_SESSION (SessionID, AttemptNo, StudentID, ExamID, StartTime, EndTime, Status, IPAddress, BrowserInfo)
        VALUES (:SessionID, :AttemptNo, :StudentID, :ExamID, :StartTime, :EndTime, :Status, :IPAddress, :BrowserInfo)`,
-      { SessionID, AttemptNo, StudentID, ExamID, StartTime: StartTime || null, EndTime: EndTime || null, Status, IPAddress: IPAddress || null, BrowserInfo: BrowserInfo || null },
+      { SessionID, AttemptNo: Number(AttemptNo), StudentID, ExamID, StartTime: StartTime || null, EndTime: EndTime || null, Status, IPAddress: IPAddress || null, BrowserInfo: BrowserInfo || null },
       { autoCommit: true }
     );
     res.status(201).json({ message: "Session created successfully", SessionID });

@@ -33,18 +33,32 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { ProctorID, Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
+    const { Name, Email, Role, Designation, AlgorithmVersion, ModelName } = req.body;
     const isAIProctor = Role === "AI" || Boolean(AlgorithmVersion || ModelName);
     const effectiveRole = isAIProctor ? "AI" : Role;
     const emailValue = isAIProctor ? null : Email;
 
-    console.log("POST /proctors - Received:", { ProctorID, Name, Email, Role, Designation, AlgorithmVersion, ModelName, isAIProctor });
-
+    if (!Name) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+    if (Email && !isAIProctor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
     if (isAIProctor && (!AlgorithmVersion || !ModelName)) {
       return res.status(400).json({ error: "AlgorithmVersion and ModelName are required for AI proctors" });
     }
 
+    console.log("POST /proctors - Received:", { Name, Email, Role, Designation, AlgorithmVersion, ModelName, isAIProctor });
+
     connection = await getConnection();
+
+    // Auto-generate ProctorID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(ProctorID, '[0-9]+'))), 0) AS MAXNUM FROM PROCTOR WHERE REGEXP_LIKE(ProctorID, '^PRO[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const ProctorID = "PRO" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO PROCTOR (ProctorID, Name, Role)
        VALUES (:ProctorID, :Name, :Role)`,
@@ -75,7 +89,7 @@ router.post("/", async (req, res) => {
 
     await connection.commit();
     console.log("✓ Transaction committed for:", ProctorID);
-    res.status(201).json({ message: "Proctor created successfully" });
+    res.status(201).json({ message: "Proctor created successfully", ProctorID });
   } catch (error) {
     console.error("✗ Error in POST /proctors:", error.message);
     if (connection) {

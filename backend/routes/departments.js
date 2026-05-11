@@ -25,16 +25,28 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { DeptID, DeptName, Faculty } = req.body;
+    const { DeptName, Faculty } = req.body;
+
+    if (!DeptName) {
+      return res.status(400).json({ error: "DeptName is required" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate DeptID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(DeptID, '[0-9]+'))), 0) AS MAXNUM FROM DEPARTMENT WHERE REGEXP_LIKE(DeptID, '^DEPT[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const DeptID = "DEPT" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO DEPARTMENT (DeptID, DeptName, Faculty)
        VALUES (:DeptID, :DeptName, :Faculty)`,
-      { DeptID, DeptName, Faculty }
+      { DeptID, DeptName, Faculty: Faculty || null }
     );
 
-    res.status(201).json({ message: "Department created successfully" });
+    res.status(201).json({ message: "Department created successfully", DeptID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {

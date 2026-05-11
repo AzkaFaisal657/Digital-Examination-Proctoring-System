@@ -38,24 +38,29 @@ router.get("/student/:studentId", (req, res) => {
 });
 
 // CREATE new notification
-router.post("/", (req, res) => {
-  const { NotifID, StudentID, Message, Type } = req.body;
-  
-  if (!NotifID || !StudentID || !Message || !Type) {
-    return res.status(400).json({ message: "Missing required fields" });
+router.post("/", async (req, res) => {
+  const { StudentID, Message, Type } = req.body;
+
+  if (!StudentID || !Message || !Type) {
+    return res.status(400).json({ error: "StudentID, Message, and Type are required" });
   }
-  
-  const query = `
-    INSERT INTO NOTIFICATION (NotifID, StudentID, Message, Type, IsRead)
-    VALUES (?, ?, ?, ?, 'N')
-  `;
-  
-  db.query(query, [NotifID, StudentID, Message, Type], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+
+  try {
+    // Auto-generate NotifID
+    const existing = await db.query(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(NotifID, '[0-9]+'))), 0) AS MAXNUM FROM NOTIFICATION WHERE REGEXP_LIKE(NotifID, '^NTF[0-9]+$')`
+    );
+    const nextNum = (existing[0].MAXNUM || 0) + 1;
+    const NotifID = "NTF" + String(nextNum).padStart(3, "0");
+
+    await db.query(
+      `INSERT INTO NOTIFICATION (NotifID, StudentID, Message, Type, IsRead) VALUES (?, ?, ?, ?, 'N')`,
+      [NotifID, StudentID, Message, Type]
+    );
     res.status(201).json({ message: "Notification created successfully", NotifID });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // MARK as read

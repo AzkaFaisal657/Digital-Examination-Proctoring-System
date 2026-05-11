@@ -58,46 +58,46 @@ router.get("/:id", (req, res) => {
 });
 
 // CREATE new question
-router.post("/", (req, res) => {
-  const { QuestionID, QuestionText, DifficultyLevel, Marks, BankID, Type, CorrectOptionCount, WordLimit, ModelAnswer } = req.body;
-  
-  if (!QuestionID || !QuestionText || !Marks || !BankID || !Type) {
-    return res.status(400).json({ message: "Missing required fields" });
+router.post("/", async (req, res) => {
+  const { QuestionText, DifficultyLevel, Marks, BankID, Type, CorrectOptionCount, WordLimit, ModelAnswer } = req.body;
+
+  if (!QuestionText || Marks === undefined || Marks === null || !BankID || !Type) {
+    return res.status(400).json({ error: "QuestionText, Marks, BankID, and Type are required" });
   }
-  
-  const query = `
-    INSERT INTO QUESTION (QuestionID, QuestionText, DifficultyLevel, Marks, BankID)
-    VALUES (?, ?, ?, ?, ?)
-  `;
-  
-  db.query(query, [QuestionID, QuestionText, DifficultyLevel || "Medium", Marks, BankID], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    
+  if (isNaN(Number(Marks)) || Number(Marks) <= 0) {
+    return res.status(400).json({ error: "Marks must be a positive number" });
+  }
+
+  try {
+    // Auto-generate QuestionID
+    const existing = await db.query(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(QuestionID, '[0-9]+'))), 0) AS MAXNUM FROM QUESTION WHERE REGEXP_LIKE(QuestionID, '^QST[0-9]+$')`
+    );
+    const nextNum = (existing[0].MAXNUM || 0) + 1;
+    const QuestionID = "QST" + String(nextNum).padStart(3, "0");
+
+    await db.query(
+      `INSERT INTO QUESTION (QuestionID, QuestionText, DifficultyLevel, Marks, BankID) VALUES (?, ?, ?, ?, ?)`,
+      [QuestionID, QuestionText, DifficultyLevel || "Medium", Number(Marks), BankID]
+    );
+
     // Insert specialization based on type
     if (Type === "MCQ") {
-      const mcqQuery = `
-        INSERT INTO MCQ_QUESTION (QuestionID, CorrectOptionCount)
-        VALUES (?, ?)
-      `;
-      db.query(mcqQuery, [QuestionID, CorrectOptionCount || 1], (mcqErr) => {
-        if (mcqErr) return res.status(500).json({ error: mcqErr.message });
-        res.status(201).json({ message: "MCQ Question created successfully", QuestionID });
-      });
+      await db.query(
+        `INSERT INTO MCQ_QUESTION (QuestionID, CorrectOptionCount) VALUES (?, ?)`,
+        [QuestionID, CorrectOptionCount ? Number(CorrectOptionCount) : 1]
+      );
     } else if (Type === "Subjective") {
-      const subjQuery = `
-        INSERT INTO SUBJECTIVE_QUESTION (QuestionID, WordLimit, ModelAnswer)
-        VALUES (?, ?, ?)
-      `;
-      db.query(subjQuery, [QuestionID, WordLimit || 500, ModelAnswer || ""], (subjErr) => {
-        if (subjErr) return res.status(500).json({ error: subjErr.message });
-        res.status(201).json({ message: "Subjective Question created successfully", QuestionID });
-      });
-    } else {
-      res.status(201).json({ message: "Question created successfully", QuestionID });
+      await db.query(
+        `INSERT INTO SUBJECTIVE_QUESTION (QuestionID, WordLimit, ModelAnswer) VALUES (?, ?, ?)`,
+        [QuestionID, WordLimit ? Number(WordLimit) : 500, ModelAnswer || ""]
+      );
     }
-  });
+
+    res.status(201).json({ message: "Question created successfully", QuestionID });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // UPDATE question

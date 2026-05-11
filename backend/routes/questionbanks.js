@@ -58,24 +58,29 @@ router.get("/:id", (req, res) => {
 });
 
 // CREATE new question bank
-router.post("/", (req, res) => {
-  const { BankID, BankName, Subject, InstructorID } = req.body;
-  
-  if (!BankID || !BankName || !InstructorID) {
-    return res.status(400).json({ message: "Missing required fields" });
+router.post("/", async (req, res) => {
+  const { BankName, Subject, InstructorID } = req.body;
+
+  if (!BankName || !InstructorID) {
+    return res.status(400).json({ error: "BankName and InstructorID are required" });
   }
-  
-  const query = `
-    INSERT INTO QUESTION_BANK (BankID, BankName, Subject, InstructorID)
-    VALUES (?, ?, ?, ?)
-  `;
-  
-  db.query(query, [BankID, BankName, Subject, InstructorID], (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+
+  try {
+    // Auto-generate BankID
+    const existing = await db.query(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(BankID, '[0-9]+'))), 0) AS MAXNUM FROM QUESTION_BANK WHERE REGEXP_LIKE(BankID, '^QB[0-9]+$')`
+    );
+    const nextNum = (existing[0].MAXNUM || 0) + 1;
+    const BankID = "QB" + String(nextNum).padStart(3, "0");
+
+    await db.query(
+      `INSERT INTO QUESTION_BANK (BankID, BankName, Subject, InstructorID) VALUES (?, ?, ?, ?)`,
+      [BankID, BankName, Subject || null, InstructorID]
+    );
     res.status(201).json({ message: "Question bank created successfully", BankID });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // UPDATE question bank

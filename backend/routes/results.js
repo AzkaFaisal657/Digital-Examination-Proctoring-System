@@ -27,18 +27,27 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const {
-      ResultID,
-      AttemptNo,
-      StudentID,
-      ExamID,
-      MarksObtained,
-      Grade,
-      Status,
-      PublishedDate,
-    } = req.body;
+    const { AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate } = req.body;
+
+    if (!AttemptNo || !StudentID || !ExamID) {
+      return res.status(400).json({ error: "AttemptNo, StudentID, and ExamID are required" });
+    }
+    if (isNaN(Number(AttemptNo)) || Number(AttemptNo) < 1) {
+      return res.status(400).json({ error: "AttemptNo must be a positive integer" });
+    }
+    if (MarksObtained !== undefined && MarksObtained !== null && MarksObtained !== "" && isNaN(Number(MarksObtained))) {
+      return res.status(400).json({ error: "MarksObtained must be a valid number" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate ResultID
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(ResultID, '[0-9]+'))), 0) AS MAXNUM FROM RESULT WHERE REGEXP_LIKE(ResultID, '^RES[0-9]+$')`
+    );
+    const nextNum = (maxResult.rows[0].MAXNUM || 0) + 1;
+    const ResultID = "RES" + String(nextNum).padStart(3, "0");
+
     await connection.execute(
       `INSERT INTO RESULT (ResultID, AttemptNo, StudentID, ExamID, MarksObtained, Grade, Status, PublishedDate)
        VALUES (
@@ -53,17 +62,17 @@ router.post("/", async (req, res) => {
        )`,
       {
         ResultID,
-        AttemptNo,
+        AttemptNo: Number(AttemptNo),
         StudentID,
         ExamID,
-        MarksObtained,
-        Grade,
-        Status,
-        PublishedDate,
+        MarksObtained: MarksObtained !== "" && MarksObtained !== undefined ? Number(MarksObtained) : null,
+        Grade: Grade || null,
+        Status: Status || null,
+        PublishedDate: PublishedDate || null,
       }
     );
 
-    res.status(201).json({ message: "Result created successfully" });
+    res.status(201).json({ message: "Result created successfully", ResultID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {

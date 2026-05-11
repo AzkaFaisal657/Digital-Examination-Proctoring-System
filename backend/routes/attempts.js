@@ -25,16 +25,28 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   let connection;
   try {
-    const { AttemptNo, StudentID, ExamID, Status } = req.body;
+    const { StudentID, ExamID, Status } = req.body;
+
+    if (!StudentID || !ExamID) {
+      return res.status(400).json({ error: "StudentID and ExamID are required" });
+    }
 
     connection = await getConnection();
+
+    // Auto-generate AttemptNo: max attempt for this student+exam + 1
+    const maxResult = await connection.execute(
+      `SELECT NVL(MAX(AttemptNo), 0) AS MAXNUM FROM ATTEMPT WHERE StudentID = :StudentID AND ExamID = :ExamID`,
+      { StudentID, ExamID }
+    );
+    const AttemptNo = (maxResult.rows[0].MAXNUM || 0) + 1;
+
     await connection.execute(
       `INSERT INTO ATTEMPT (AttemptNo, StudentID, ExamID, Status)
        VALUES (:AttemptNo, :StudentID, :ExamID, :Status)`,
-      { AttemptNo, StudentID, ExamID, Status }
+      { AttemptNo, StudentID, ExamID, Status: Status || null }
     );
 
-    res.status(201).json({ message: "Attempt created successfully" });
+    res.status(201).json({ message: "Attempt created successfully", AttemptNo });
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
