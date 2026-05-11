@@ -260,6 +260,19 @@ const modules = {
       { name: "PhoneNo", required: true },
     ],
   },
+  enrolledin: {
+  title: "Enrollments",
+  subtitle: "Manage student course enrollments.",
+  endpoint: "enrolledin",
+  composite: true,
+  readOnlyUpdate: true,
+  keyFields: ["StudentID", "CourseID"],
+  fields: ["StudentID", "CourseID"],
+  formFields: [
+    { name: "StudentID", required: true },
+    { name: "CourseID", required: true },
+  ],
+},
 };
 
 let currentView = "dashboard";
