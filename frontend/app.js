@@ -189,20 +189,16 @@ const modules = {
       { name: "IsCorrect", options: ["Y", "N"], required: true },
     ],
   },
-  subjectivequestions: {
-    title: "Subjective Questions",
-    subtitle: "Subjective questions with model answers and word limits.",
-    endpoint: "subjectivequestions",
+  subjectiveanswers: {
+    title: "Subjective Answers",
+    subtitle: "Model answers for subjective questions with word limits.",
+    endpoint: "subjectiveanswers",
     idKey: "QUESTIONID",
-    fields: ["QuestionID", "QuestionText", "DifficultyLevel", "Marks", "BankID", "WordLimit", "ModelAnswer"],
+    fields: ["QuestionID", "QuestionText", "ModelAnswer", "WordLimit"],
     formFields: [
       { name: "QuestionID", required: true },
-      { name: "QuestionText", type: "textarea", required: true, full: true },
-      { name: "DifficultyLevel", options: ["Easy", "Medium", "Hard"] },
-      { name: "Marks", type: "number", required: true },
-      { name: "BankID", required: true },
-      { name: "WordLimit", type: "number", required: true },
       { name: "ModelAnswer", type: "textarea", required: true, full: true },
+      { name: "WordLimit", type: "number", required: true },
     ],
   },
   examsessions: {
