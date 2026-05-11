@@ -193,10 +193,10 @@ const modules = {
     title: "Subjective Answers",
     subtitle: "Model answers for subjective questions with word limits.",
     endpoint: "subjectiveanswers",
-    idKey: "QUESTIONID",
+    idKey: "QuestionID",
     fields: ["QuestionID", "QuestionText", "ModelAnswer", "WordLimit"],
     formFields: [
-      { name: "QuestionID", required: true },
+      { name: "QuestionID", required: true, readOnly: true },
       { name: "ModelAnswer", type: "textarea", required: true, full: true },
       { name: "WordLimit", type: "number", required: true },
     ],
@@ -617,7 +617,7 @@ async function showModule(moduleKey) {
 function fieldInput(field, value = "") {
   if (field.options) {
     return `
-      <select name="${field.name}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""}>
+      <select name="${field.name}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""} ${field.readOnly ? "disabled" : ""}>
         <option value="">Select ${field.name}</option>
         ${field.options
           .map((option) => `<option value="${option}" ${String(value) === option ? "selected" : ""}>${option}</option>`)
@@ -627,12 +627,12 @@ function fieldInput(field, value = "") {
   }
 
   if (field.type === "textarea") {
-    return `<textarea name="${field.name}" rows="3" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""}>${normalizeValue(value)}</textarea>`;
+    return `<textarea name="${field.name}" rows="3" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""} ${field.readOnly ? "readonly" : ""}>${normalizeValue(value)}</textarea>`;
   }
 
   const inputType = field.type || "text";
   const formattedDate = inputType === "date" && value ? normalizeValue(value).slice(0, 10) : normalizeValue(value);
-  return `<input type="${inputType}" name="${field.name}" value="${formattedDate}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""} />`;
+  return `<input type="${inputType}" name="${field.name}" value="${formattedDate}" data-base-required="${field.required ? "true" : "false"}" ${field.required ? "required" : ""} ${field.readOnly ? "readonly" : ""} />`;
 }
 
 function renderProctorWizardStepOne() {
